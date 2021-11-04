@@ -3,6 +3,7 @@ from torch import Tensor
 from typing import Tuple, Iterator
 from contextlib import contextmanager
 from torch.utils.data import Dataset, IterableDataset
+import random as random
 
 
 def random_labelled_image(
@@ -20,7 +21,12 @@ def random_labelled_image(
     # TODO:
     #  Implement according to the docstring description.
     # ====== YOUR CODE: ======
-    
+    if dtype == torch.int:
+        image = torch.randint(low=low, high=high, size=shape, dtype = dtype)
+    else:
+        image = torch.rand(shape, dtype = dtype) * (high - low) + low
+
+    label = random.randint(0, 1)
     # ========================
     return image, label
 
@@ -36,16 +42,16 @@ def torch_temporary_seed(seed: int):
     #  Implement this context manager as described.
     #  See torch.random.get/set_rng_state(), torch.random.manual_seed().
     # ====== YOUR CODE: ======
-    
+    initial_rng_state = torch.get_rng_state()
     # ========================
     try:
         # ====== YOUR CODE: ======
-        
+        torch.random.manual_seed(seed)
         # ========================
         yield
     finally:
         # ====== YOUR CODE: ======
-        
+        torch.set_rng_state(initial_rng_state)
         # ========================
 
 
@@ -90,7 +96,7 @@ class RandomImageDataset(Dataset):
         :return: Number of samples in this dataset.
         """
         # ====== YOUR CODE: ======
-        
+        pass
         # ========================
 
 
@@ -119,7 +125,7 @@ class ImageStreamDataset(IterableDataset):
         #  Yield tuples to produce an iterator over random images and labels.
         #  The iterator should produce an infinite stream of data.
         # ====== YOUR CODE: ======
-        
+        pass
         # ========================
 
 
@@ -147,10 +153,10 @@ class SubsetDataset(Dataset):
         #  Return the item at index + offset from the source dataset.
         #  Raise an IndexError if index is out of bounds.
         # ====== YOUR CODE: ======
-        
+        pass
         # ========================
 
     def __len__(self):
         # ====== YOUR CODE: ======
-        
+        pass
         # ========================

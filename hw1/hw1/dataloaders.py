@@ -25,7 +25,24 @@ class FirstLastSampler(Sampler):
         # If the length of the data source is N, you should return indices in a
         # first-last ordering, i.e. [0, N-1, 1, N-2, ...].
         # ====== YOUR CODE: ======
-        
+        next_item_from_first_half = True
+        next_top = 0
+        next_bottom = len(self.data_source) - 1
+
+        while next_top <= next_bottom:
+            # print(f'next_item_from_first_half={next_item_from_first_half}, next_top={next_top}, next_bottom={next_bottom}', end="   ")  #DEBUG
+            # print(f'dtypes of next_top, next_bottom indexes: {type(next_top), type(next_bottom)}')      #DEBUG
+
+            if next_item_from_first_half:
+                item_to_provide = next_top
+                next_top += 1
+                next_item_from_first_half = False
+            else:
+                item_to_provide = next_bottom
+                next_bottom -= 1
+                next_item_from_first_half = True
+
+            yield item_to_provide
         # ========================
 
     def __len__(self):

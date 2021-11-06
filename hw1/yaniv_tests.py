@@ -59,7 +59,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(True, True)  # add assertion here
 
 
-    def test_sampler(self):
+    def test_firstlast_sampler(self):
         self.setup()
         cifar10_train_ds = self.cifar10_train_ds
 
@@ -91,6 +91,28 @@ class MyTestCase(unittest.TestCase):
             plt.show()
             if idx >= num_batches_to_show - 1:
                 break
+
+    def test_trainvalidationloaders(self):
+        self.setup()
+        cifar10_train_ds = self.cifar10_train_ds
+
+        # Testing the train/validation split dataloaders
+        import hw1.dataloaders as hw1dataloaders
+
+        validation_ratio = 0.2
+        dl_train, dl_valid = hw1dataloaders.create_train_validation_loaders(cifar10_train_ds, validation_ratio)
+
+        train_idx = set(dl_train.sampler.indices)
+        valid_idx = set(dl_valid.sampler.indices)
+        train_size = len(train_idx)
+        valid_size = len(valid_idx)
+        print('Training set size: ', train_size)
+        print('Validation set size: ', valid_size)
+
+        # Tests
+        self.assertEqual(train_size + valid_size, len(cifar10_train_ds), "Incorrect total number of samples")
+        self.assertEqual(valid_size, validation_ratio * (train_size + valid_size), "Incorrect ratio")
+        self.assertTrue(train_idx.isdisjoint(valid_idx), "Train and validation sets are not disjoint")
 
 
 if __name__ == '__main__':

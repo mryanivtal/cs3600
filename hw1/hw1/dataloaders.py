@@ -2,7 +2,7 @@ import math
 import numpy as np
 import torch
 import torch.utils.data
-from typing import Sized, Iterator
+from typing import Sized, Iterator, Sequence
 from torch.utils.data import Dataset, Sampler
 
 
@@ -75,7 +75,47 @@ def create_train_validation_loaders(
     #  Hint: you can specify a Sampler class for the `DataLoader` instance
     #  you create.
     # ====== YOUR CODE: ======
-    
+    num_samples = len(dataset)
+    num_samples_val = int(num_samples * validation_ratio)
+    num_samples_train = num_samples - num_samples_val
+
+    indexes_dataset = np.arange(0, num_samples)
+    np.random.shuffle(indexes_dataset)
+    indexes_val = indexes_dataset[0:num_samples_val]
+    indexes_train = indexes_dataset[num_samples_val:]
+
+    sampler_val = IndexBasedSampler(dataset, indexes_val)
+    sampler_train = IndexBasedSampler(dataset, indexes_train)
+
+    dl_valid = torch.utils.data.DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, sampler=sampler_val)
+    dl_train = torch.utils.data.DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, sampler=sampler_train)
     # ========================
 
     return dl_train, dl_valid
+
+
+class IndexBasedSampler(Sampler):
+    """
+    A sampler that returns elements based on a predefined ordered index list.
+    """
+
+    def __init__(self, data_source: Sized, indices: Sequence):
+        super().__init__(data_source)
+        self.data_source = data_source
+        self.indices = indices
+
+    def __iter__(self) -> Iterator[int]:
+        i = 0
+
+        while i < len(self.indices):
+            item_to_provide = self.indices[i]
+            i += 1
+            yield item_to_provide
+
+
+    def __len__(self):
+        return len(self.indices)
+
+
+    def __getitem__(self, index):
+        return self.data_source[index]

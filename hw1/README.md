@@ -1,7 +1,6 @@
-# CS236781: Deep Learning on Computational Accelerators
+# CS3600: Deep Learning
 # Homework Assignment 1
 
-Faculty of Computer Science, Technion.
 
 ## Introduction
 
@@ -14,8 +13,7 @@ python machine learning packages such as `numpy`, `sklearn` and `pandas`.
 
 ## General Guidelines
 
-- Please read the [getting started page](https://vistalab-technion.github.io/cs236781/assignments/getting-started)
-  on the course website. It explains how to **setup, run and submit** the assignment.
+- Please read the general Readme file with the guildance.
 - The text and code cells in these notebooks are intended to guide you through the
   assignment and help you verify your solutions.
   The notebooks **do not need to be edited** at all (unless you wish to play around).

@@ -166,10 +166,13 @@ class SubsetDataset(Dataset):
         #  Return the item at index + offset from the source dataset.
         #  Raise an IndexError if index is out of bounds.
         # ====== YOUR CODE: ======
-        pass
+        if index < self.subset_len:
+            return self.source_dataset[self.offset + index]
+        else:
+            raise IndexError
         # ========================
 
     def __len__(self):
         # ====== YOUR CODE: ======
-        pass
+        return self.subset_len
         # ========================

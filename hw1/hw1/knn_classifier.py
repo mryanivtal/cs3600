@@ -31,7 +31,7 @@ class KNNClassifier(object):
         #     y_train.
         #  2. Save the number of classes as n_classes.
         # ====== YOUR CODE: ======
-        
+        pass
         # ========================
 
         self.x_train = x_train
@@ -63,7 +63,7 @@ class KNNClassifier(object):
             #  - Set y_pred[i] to the most common class among them
             #  - Don't use an explicit loop.
             # ====== YOUR CODE: ======
-            
+            pass
             # ========================
 
         return y_pred
@@ -91,7 +91,12 @@ def l2_dist(x1: Tensor, x2: Tensor):
 
     dists = None
     # ====== YOUR CODE: ======
-    
+    # dists = torch.cdist(x1, x2, p=2)    # Library solution for reference
+    x1b = torch.sum(x1 ** 2, axis=1, keepdim=True)
+    x2b = torch.sum(x2 ** 2, axis=1)
+    x1x2 = np.dot(x1, x2.T)
+    dists = np.sqrt(x1b - 2 * x1x2 + x2b)
+
     # ========================
 
     return dists
@@ -111,7 +116,8 @@ def accuracy(y: Tensor, y_pred: Tensor):
     # TODO: Calculate prediction accuracy. Don't use an explicit loop.
     accuracy = None
     # ====== YOUR CODE: ======
-    
+    wrong_predictions = np.count_nonzero((y - y_pred))
+    accuracy = 1 - (wrong_predictions / len(y))
     # ========================
 
     return accuracy

@@ -16,7 +16,7 @@ import torchvision.transforms as tvtf
 
 
 
-class MyTestCase(unittest.TestCase):
+class MyTestCasePartA(unittest.TestCase):
 
     def setup(self):
         plt.rcParams.update({'font.size': 12})

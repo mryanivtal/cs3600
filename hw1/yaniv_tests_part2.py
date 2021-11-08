@@ -44,6 +44,7 @@ class MyTestCase(unittest.TestCase):
 
         # Get all test data
         self.x_test, self.y_test = dataloader_utils.flatten(self.dl_test)
+        self.ds_train = ds_train
 
     def test_l2_dist(self):
         self.setup()
@@ -91,10 +92,60 @@ class MyTestCase(unittest.TestCase):
 
         # Calculate accuracy
         accuracy = hw1knn.accuracy(y_test, y_pred)
+        self.accuracy = accuracy
         print(f'Accuracy: {accuracy * 100:.2f}%')
 
         # Sanity check: at least 80% accuracy
         test.assertGreater(accuracy, 0.8)
+
+
+
+    def test_find_best_k(self):
+        self.setup()
+        self.test_knn_classifier()
+
+        test = self
+        ds_train = self.ds_train
+        dl_train = self.dl_train
+        x_test = self.x_test
+        y_test = self.y_test
+        accuracy = self.accuracy
+
+        num_folds = 4
+        k_choices = [1, 3, 5, 8, 12, 20, 50]
+
+        # Run cross-validation
+        best_k, accuracies = hw1knn.find_best_k(ds_train, k_choices, num_folds)
+
+        # Plot accuracies per k
+        _, ax = plt.subplots(figsize=(12, 6), subplot_kw=dict(xticks=k_choices))
+        for i, k in enumerate(k_choices):
+            curr_accuracies = accuracies[i]
+            ax.scatter([k] * len(curr_accuracies), curr_accuracies)
+        # --------
+
+        accuracies_mean = np.array([np.mean(accs) for accs in accuracies])
+        accuracies_std = np.array([np.std(accs) for accs in accuracies])
+        ax.errorbar(k_choices, accuracies_mean, yerr=accuracies_std)
+        ax.set_title(f'{num_folds}-fold Cross-validation on k')
+        ax.set_xlabel('k')
+        ax.set_ylabel('Accuracy')
+
+        print('best_k =', best_k)
+        # -------
+
+        knn_classifier = hw1knn.KNNClassifier(k=best_k)
+        knn_classifier.train(dl_train)
+        y_pred = knn_classifier.predict(x_test)
+
+        # Calculate accuracy
+        accuracy_best_k = hw1knn.accuracy(y_test, y_pred)
+        print(f'Accuracy: {accuracy_best_k * 100:.2f}%')
+
+        test.assertGreater(accuracy_best_k, accuracy)
+
+
+
 
 if __name__ == '__main__':
     unittest.main()

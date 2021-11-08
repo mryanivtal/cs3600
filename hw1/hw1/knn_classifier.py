@@ -6,6 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 import cs3600.dataloader_utils as dataloader_utils
 
 from . import dataloaders
+from .dataloaders import create_train_validation_loaders
 
 
 class KNNClassifier(object):
@@ -163,7 +164,17 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
         #  random split each iteration), or implement something else.
 
         # ====== YOUR CODE: ======
-        pass
+        current_choice_accuracies = []
+        for j in range(num_folds):
+            dl_train, dl_valid = create_train_validation_loaders(ds_train, 1/len(k_choices))
+
+            model.train(dl_train)
+
+            x_valid, y_valid = dataloader_utils.flatten(dl_valid)
+            y_valid_pred = model.predict(x_valid)
+            current_choice_accuracies.append(accuracy(y_valid, y_valid_pred))
+
+        accuracies.append(current_choice_accuracies)
         # ========================
 
     best_k_idx = np.argmax([np.mean(acc) for acc in accuracies])

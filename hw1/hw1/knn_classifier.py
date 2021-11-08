@@ -31,13 +31,25 @@ class KNNClassifier(object):
         #     y_train.
         #  2. Save the number of classes as n_classes.
         # ====== YOUR CODE: ======
-        pass
+        for batch_number, batch_data in enumerate(dl_train):
+            if batch_number == 0:
+                x_train = batch_data[0].clone()
+                y_train = batch_data[1].clone()
+            else:
+                x_train = torch.cat((x_train, batch_data[0]))
+                y_train = torch.cat((y_train, batch_data[1]))
+
+        n_classes = len(y_train.unique())
+
+        # print(f'Batches: {batch_number}, x_train: {x_train.shape}, y_train: {y_train.shape}')
+
         # ========================
 
         self.x_train = x_train
         self.y_train = y_train
         self.n_classes = n_classes
         return self
+
 
     def predict(self, x_test: Tensor):
         """
@@ -63,7 +75,10 @@ class KNNClassifier(object):
             #  - Set y_pred[i] to the most common class among them
             #  - Don't use an explicit loop.
             # ====== YOUR CODE: ======
-            pass
+            knn_indexes = dist_matrix[:, i].argsort()[:self.k]
+            knn_classes = self.y_train[knn_indexes]
+            class_counts = np.bincount(knn_classes)
+            y_pred[i] = np.argmax(class_counts)
             # ========================
 
         return y_pred
@@ -148,7 +163,7 @@ def find_best_k(ds_train: Dataset, k_choices, num_folds):
         #  random split each iteration), or implement something else.
 
         # ====== YOUR CODE: ======
-        
+        pass
         # ========================
 
     best_k_idx = np.argmax([np.mean(acc) for acc in accuracies])

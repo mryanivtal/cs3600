@@ -35,17 +35,15 @@ class MyTestCase(unittest.TestCase):
         data_root = os.path.expanduser('~/.pytorch-datasets')
         ds_train = hw1datasets.SubsetDataset(
             torchvision.datasets.MNIST(root=data_root, download=True, train=True, transform=tf_ds), num_train)
-        dl_train = torch.utils.data.DataLoader(ds_train, batch_size)
+        self.dl_train = torch.utils.data.DataLoader(ds_train, batch_size)
 
         # Test dataset & loader
-        ds_test = hw1datasets.SubsetDataset(
+        self.ds_test = hw1datasets.SubsetDataset(
             torchvision.datasets.MNIST(root=data_root, download=True, train=False, transform=tf_ds), num_test)
-        dl_test = torch.utils.data.DataLoader(ds_test, batch_size)
+        self.dl_test = torch.utils.data.DataLoader(self.ds_test, batch_size)
 
         # Get all test data
-        x_test, y_test = dataloader_utils.flatten(dl_test)
-        self.assertEqual(True, True)
-
+        self.x_test, self.y_test = dataloader_utils.flatten(self.dl_test)
 
     def test_l2_dist(self):
         self.setup()
@@ -79,6 +77,24 @@ class MyTestCase(unittest.TestCase):
         y2 = torch.tensor([2, 2, 2, 2])
         test.assertEqual(hw1knn.accuracy(y1, y2), 0.25)
 
+    def test_knn_classifier(self):
+        self.setup()
+        test = self
+        dl_train = self.dl_train
+        x_test = self.x_test
+        y_test = self.y_test
+
+        # Test kNN Classifier
+        knn_classifier = hw1knn.KNNClassifier(k=10)
+        knn_classifier.train(dl_train)
+        y_pred = knn_classifier.predict(x_test)
+
+        # Calculate accuracy
+        accuracy = hw1knn.accuracy(y_test, y_pred)
+        print(f'Accuracy: {accuracy * 100:.2f}%')
+
+        # Sanity check: at least 80% accuracy
+        test.assertGreater(accuracy, 0.8)
 
 if __name__ == '__main__':
     unittest.main()

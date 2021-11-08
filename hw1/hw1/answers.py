@@ -38,11 +38,31 @@ Then, use the train for training, the Validation for hyperparameter tuning and t
 # Part 2 answers
 
 part2_q1 = r"""
-**Your answer:**
+**Yes** - increasing k lead to improved generalization for unseen data.
+Having a very small k (e.g. 1) makes each prediction very sensitive to variations in the train data (or in other words - overfit).
+This is because each prediction depends on exactly one point in the training set.  In such case, outliers will have
+unfiltered impact on prediction.    On the other extreme, if k = number of points in train data, than all predictions will be the same -
+The most common class.    There is no one k fits all - k must be optimized based on the specific dataset properties an tested on
+a validation set to assess generalization error.  
+Generally - "noisy" data will require larger k values, while very neat data will work better with smaller values. 
 """
 
 part2_q2 = r"""
-**Your answer:**
+**1. Select model based on Training-set accuracy** - This is a bad idea, because it will lead to overfit.
+The model that has the best Training-set accuracy is the model that managed to fit the best to the Train data.
+E.g. I can build a model that predicts a person's height using only one attribute in the dataset - the person's ID number.
+This model will achieve 100% train accuracy, but will obviously generalize terribly on unseen data. 
+A model must be evaluated based on unseen data and not on the train data. 
+
+**2. Select model based on Test-set accuracy** - There are two problems with this approach:
+ a. Using the test data for model selection / calibration will leave us with no unseen data for generalization error assessment.
+    If we use the same dataset for both, the final model assessment will not provide a good assessment for the generalization error, 
+    because the model is already calibrated for this dataset specifically.    For this reason, we need to keep some unseen data for 
+    the final generalization assessment.
+ b. As we can see in the above plot, different train/validation datasets give different results for the same model hyperparameters (in this case k)
+    Running the model in kfolds method provides some more generalization by running several (k) times per model option and 
+    averaging the results to get a more general result.  
+        
 """
 
 # ==============

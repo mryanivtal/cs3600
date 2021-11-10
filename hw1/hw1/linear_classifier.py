@@ -22,8 +22,9 @@ class LinearClassifier(object):
         #  Initialize it from a normal dist with zero mean and the given std.
 
         self.weights = None
+
         # ====== YOUR CODE: ======
-        
+        self.weights = torch.randn((n_features, n_classes))
         # ========================
 
     def predict(self, x: Tensor):
@@ -45,7 +46,8 @@ class LinearClassifier(object):
 
         y_pred, class_scores = None, None
         # ====== YOUR CODE: ======
-        
+        class_scores = x @ self.weights
+        y_pred = torch.argmax(class_scores, axis=-1)
         # ========================
 
         return y_pred, class_scores
@@ -66,7 +68,7 @@ class LinearClassifier(object):
 
         acc = None
         # ====== YOUR CODE: ======
-        
+        acc = (y == y_pred).sum().float() / len(y)
         # ========================
 
         return acc * 100

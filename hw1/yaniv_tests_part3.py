@@ -5,7 +5,10 @@ import torchvision
 import numpy as np
 import matplotlib.pyplot as plt
 import hw1.transforms as hw1tf
-
+import hw1.datasets as hw1datasets
+import hw1.dataloaders as hw1dataloaders
+import torchvision.transforms as tvtf
+import hw1.linear_classifier as hw1linear
 
 
 class MyTestCase(unittest.TestCase):
@@ -13,6 +16,7 @@ class MyTestCase(unittest.TestCase):
         plt.rcParams.update({'font.size': 12})
         torch.random.manual_seed(1904)
         test = unittest.TestCase()
+        self.test_linear_classifier()
         #----------------------------------------------
 
 
@@ -77,10 +81,16 @@ class MyTestCase(unittest.TestCase):
             torchvision.datasets.MNIST(root=data_root, download=True, train=False, transform=tf_ds),
             num_test)
         dl_test = torch.utils.data.DataLoader(ds_test, batch_size)
+        self.dl_test = dl_test
+        self.dl_train = dl_train
+        self.dl_valid = dl_valid
 
         x0, y0 = ds_train[0]
         n_features = torch.numel(x0)
+        self.n_features = n_features
+
         n_classes = 10
+        self.n_classes=n_classes
 
         # Make sure samples have bias term added
         test.assertEqual(n_features, 28 * 28 * 1 + 1, "Incorrect sample dimension")
@@ -98,6 +108,39 @@ class MyTestCase(unittest.TestCase):
         mean_acc /= len(dl_test)
 
         print(f"Accuracy: {mean_acc:.1f}%")
+
+
+    def test_svm_hinge_loss(self):
+        test = self
+        self.setup()
+        dl_test = self.dl_test
+        dl_train = self.dl_train
+        dl_valid = self.dl_valid
+        n_features = self.n_features
+        n_classes = self.n_classes
+
+        import cs3600.dataloader_utils as dl_utils
+        from hw1.losses import SVMHingeLoss
+
+        torch.random.manual_seed(42)
+
+        # Classify all samples in the test set
+        # because it doesn't depend on randomness of train/valid split
+        x, y = dl_utils.flatten(dl_test)
+
+        # Compute predictions
+        lin_cls = hw1linear.LinearClassifier(n_features, n_classes)
+        y_pred, x_scores = lin_cls.predict(x)
+
+        # Calculate loss with our hinge-loss implementation
+        loss_fn = SVMHingeLoss(delta=1.)
+        loss = loss_fn(x, y, x_scores, y_pred)
+
+        # Compare to pre-computed expected value as a test
+        expected_loss = 9.0233
+        print("loss =", loss.item())
+        print('diff =', abs(loss.item() - expected_loss))
+        test.assertAlmostEqual(loss.item(), expected_loss, delta=1e-2)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,6 +1,6 @@
 import abc
 import torch
-
+import numpy as np
 
 class ClassifierLoss(abc.ABC):
     """
@@ -52,7 +52,35 @@ class SVMHingeLoss(ClassifierLoss):
 
         loss = None
         # ====== YOUR CODE: ======
-        
+
+        #
+        num_samples = x_scores.shape[0]
+
+        #-----------------------------vecrtorized solution
+        marginal_loss = x_scores + self.delta
+        marginal_loss = marginal_loss - torch.unsqueeze(x_scores[np.arange(num_samples), y], dim=1) * torch.ones(10)
+        marginal_loss[np.arange(num_samples), y] = 0
+        marginal_loss[marginal_loss < 0] = 0
+
+        per_sample_loss = marginal_loss.sum(axis=1)
+        loss = per_sample_loss.mean()
+
+        #-----------------------------Non-vecrtorized solution
+        # num_categories = x_scores.shape[1]
+        #
+        # loss = 0
+        # for i, y_sample in enumerate(y):
+        #     loss_sample = 0
+        #     x_score_sample = x_scores[i, :]
+        #     y_score_sample = x_score_sample[y_sample]
+        #     for j in range(num_categories):
+        #         if y_sample != j:
+        #             iter_loss = max(0, self.delta + x_score_sample[j] - y_score_sample)
+        #             loss_sample += iter_loss
+        #
+        #     loss += loss_sample
+        # loss = loss / num_samples
+
         # ========================
 
         # TODO: Save what you need for gradient calculation in self.grad_ctx

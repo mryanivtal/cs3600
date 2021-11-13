@@ -24,7 +24,7 @@ class LinearClassifier(object):
         self.weights = None
 
         # ====== YOUR CODE: ======
-        self.weights = torch.randn((n_features, n_classes))
+        self.weights = torch.randn((n_features, n_classes)) * weight_std
         # ========================
 
     def predict(self, x: Tensor):

@@ -52,11 +52,9 @@ class SVMHingeLoss(ClassifierLoss):
 
         loss = None
         # ====== YOUR CODE: ======
-
-        #
+        #-----------------------------vecrtorized solution
         num_samples = x_scores.shape[0]
 
-        #-----------------------------vecrtorized solution
         marginal_loss = x_scores + self.delta
         marginal_loss = marginal_loss - torch.unsqueeze(x_scores[np.arange(num_samples), y], dim=1) * torch.ones(10)
         marginal_loss[np.arange(num_samples), y] = 0
@@ -85,7 +83,9 @@ class SVMHingeLoss(ClassifierLoss):
 
         # TODO: Save what you need for gradient calculation in self.grad_ctx
         # ====== YOUR CODE: ======
-        
+        self.grad_ctx['marginal_loss'] = marginal_loss
+        self.grad_ctx['x'] = x
+        self.grad_ctx['y'] = y
         # ========================
 
         return loss
@@ -103,7 +103,16 @@ class SVMHingeLoss(ClassifierLoss):
 
         grad = None
         # ====== YOUR CODE: ======
-        
+        non_zero_marginal_loss = self.grad_ctx['marginal_loss']
+        non_zero_marginal_loss[non_zero_marginal_loss > 0] = 1
+
+        y = self.grad_ctx['y']
+        x = self.grad_ctx['x']
+        num_samples = x.shape[0]
+
+        row_sum = torch.sum(non_zero_marginal_loss, axis=1)
+        non_zero_marginal_loss[np.arange(num_samples), y] = -row_sum.T
+        grad = (x.T @ non_zero_marginal_loss) / num_samples
         # ========================
 
         return grad

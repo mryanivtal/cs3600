@@ -9,7 +9,8 @@ import hw1.datasets as hw1datasets
 import hw1.dataloaders as hw1dataloaders
 import torchvision.transforms as tvtf
 import hw1.linear_classifier as hw1linear
-
+import cs3600.dataloader_utils as dl_utils
+from hw1.losses import SVMHingeLoss
 
 class MyTestCase(unittest.TestCase):
     def setup(self):
@@ -119,9 +120,6 @@ class MyTestCase(unittest.TestCase):
         n_features = self.n_features
         n_classes = self.n_classes
 
-        import cs3600.dataloader_utils as dl_utils
-        from hw1.losses import SVMHingeLoss
-
         torch.random.manual_seed(42)
 
         # Classify all samples in the test set
@@ -141,6 +139,53 @@ class MyTestCase(unittest.TestCase):
         print("loss =", loss.item())
         print('diff =', abs(loss.item() - expected_loss))
         test.assertAlmostEqual(loss.item(), expected_loss, delta=1e-2)
+
+
+    def test_linear_train(self):
+        test = self
+        self.setup()
+        dl_test = self.dl_test
+        dl_train = self.dl_train
+        dl_valid = self.dl_valid
+        n_features = self.n_features
+        n_classes = self.n_classes
+
+        hp = hw1linear.hyperparams()
+        print('hyperparams =', hp)
+
+        lin_cls = hw1linear.LinearClassifier(n_features, n_classes, weight_std=hp['weight_std'])
+
+        # Evaluate on the test set
+        x_test, y_test = dl_utils.flatten(dl_test)
+        y_test_pred, _ = lin_cls.predict(x_test)
+        test_acc_before = lin_cls.evaluate_accuracy(y_test, y_test_pred)
+
+        # Train the model
+        svm_loss_fn = SVMHingeLoss()
+        train_res, valid_res = lin_cls.train(dl_train, dl_valid, svm_loss_fn,
+                                             learn_rate=hp['learn_rate'], weight_decay=hp['weight_decay'],
+                                             max_epochs=30)
+
+        # Re-evaluate on the test set
+        y_test_pred, _ = lin_cls.predict(x_test)
+        test_acc_after = lin_cls.evaluate_accuracy(y_test, y_test_pred)
+
+        # Plot loss and accuracy
+        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+        for i, loss_acc in enumerate(('loss', 'accuracy')):
+            axes[i].plot(getattr(train_res, loss_acc))
+            axes[i].plot(getattr(valid_res, loss_acc))
+            axes[i].set_title(loss_acc.capitalize(), fontweight='bold')
+            axes[i].set_xlabel('Epoch')
+            axes[i].legend(('train', 'valid'))
+            axes[i].grid(which='both', axis='y')
+
+        # Check test set accuracy
+        print(f'Test-set accuracy before training: {test_acc_before:.1f}%')
+        print(f'Test-set accuracy after training: {test_acc_after:.1f}%')
+        test.assertGreaterEqual(test_acc_after, 85.0)
+
+
 
 if __name__ == '__main__':
     unittest.main()

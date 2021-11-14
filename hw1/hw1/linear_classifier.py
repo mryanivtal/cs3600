@@ -1,10 +1,10 @@
+import numpy as np
 import torch
 from torch import Tensor
 from collections import namedtuple
 from torch.utils.data import DataLoader
 
 from .losses import ClassifierLoss
-
 
 class LinearClassifier(object):
     def __init__(self, n_features, n_classes, weight_std=0.001):
@@ -74,13 +74,13 @@ class LinearClassifier(object):
         return acc * 100
 
     def train(
-        self,
-        dl_train: DataLoader,
-        dl_valid: DataLoader,
-        loss_fn: ClassifierLoss,
-        learn_rate=0.1,
-        weight_decay=0.001,
-        max_epochs=100,
+            self,
+            dl_train: DataLoader,
+            dl_valid: DataLoader,
+            loss_fn: ClassifierLoss,
+            learn_rate=0.1,
+            weight_decay=0.001,
+            max_epochs=100,
     ):
 
         Result = namedtuple("Result", "accuracy loss")
@@ -104,12 +104,58 @@ class LinearClassifier(object):
             #     using the weight_decay parameter.
 
             # ====== YOUR CODE: ======
-            
+
+            # Train one full epoch:
+            for batch_idx, (x, y) in enumerate(dl_train):
+                y_pred, class_scores = self.predict(x)                          # predict using existing weights
+
+                _ = loss_fn.loss(x, y, class_scores, y_pred)                    # Calc loss gradient
+                d_reg_d_w = 2 * weight_decay * self.weights                     # regularization diff
+
+                batch_grad = loss_fn.grad() + d_reg_d_w                         # Calc gradient
+                self.weights -= learn_rate * batch_grad                         # Update weights
+
+            reg = weight_decay * np.multiply(self.weights, self.weights).sum()  # Weight decay regularization for new w matrix
+
+            # Iterate on all batches in epoch, store accuracy and loss values (Train)
+            epoch_train_acc, epoch_train_loss = self.evaluate_epoch_accuracy_and_loss(dl_train, loss_fn, reg)
+            train_res.accuracy.append(epoch_train_acc)
+            train_res.loss.append(epoch_train_loss)
+
+            # Iterate on all batches in epoch, store accuracy and loss values (Validation)
+            epoch_valid_acc, epoch_valid_loss = self.evaluate_epoch_accuracy_and_loss(dl_valid, loss_fn, reg)
+            valid_res.accuracy.append(epoch_valid_acc)
+            valid_res.loss.append(epoch_valid_loss)
+
+            # Test stop conditions
+
             # ========================
             print(".", end="")
 
         print("")
         return train_res, valid_res
+
+
+    def evaluate_epoch_accuracy_and_loss(self, dl_data: DataLoader, loss_fn:ClassifierLoss, regularization: float) -> (float, float):
+        batch_train_accuracy = []
+        batch_num_samples = []
+        batch_loss = []
+
+        for batch_idx, (x, y) in enumerate(dl_data):
+            y_pred, class_scores = self.predict(x)
+            batch_train_accuracy.append(self.evaluate_accuracy(y, y_pred))
+            batch_num_samples.append(len(y_pred))
+            batch_loss.append(loss_fn.loss(x, y, class_scores, y_pred) + regularization)
+
+        batch_train_accuracy = np.array(batch_train_accuracy)
+        batch_num_samples = np.array(batch_num_samples)
+        batch_loss = np.array(batch_loss)
+
+        epoch_train_accuracy = (batch_train_accuracy * batch_num_samples).sum() / batch_num_samples.sum()
+        epoch_avg_loss = batch_loss.sum() / batch_num_samples.sum()
+
+        return epoch_train_accuracy, epoch_avg_loss
+
 
     def weights_as_images(self, img_shape, has_bias=True):
         """
@@ -125,7 +171,7 @@ class LinearClassifier(object):
         #  The output shape should be (n_classes, C, H, W).
 
         # ====== YOUR CODE: ======
-        
+        pass
         # ========================
 
         return w_images
@@ -138,7 +184,9 @@ def hyperparams():
     #  Manually tune the hyperparameters to get the training accuracy test
     #  to pass.
     # ====== YOUR CODE: ======
-    
+    hp['weight_std'] = 0.001
+    hp['learn_rate'] = 0.01
+    hp['weight_decay'] = 0.001
     # ========================
 
     return hp

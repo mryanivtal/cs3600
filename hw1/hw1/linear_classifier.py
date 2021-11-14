@@ -171,7 +171,10 @@ class LinearClassifier(object):
         #  The output shape should be (n_classes, C, H, W).
 
         # ====== YOUR CODE: ======
-        pass
+        first_no_bias_col = 1 if has_bias else 0
+        num_classes = self.weights.shape[-1]
+        target_shape = (num_classes, ) + img_shape
+        w_images = torch.reshape(self.weights[first_no_bias_col:, ...], (target_shape))
         # ========================
 
         return w_images
@@ -185,8 +188,8 @@ def hyperparams():
     #  to pass.
     # ====== YOUR CODE: ======
     hp['weight_std'] = 0.001
-    hp['learn_rate'] = 0.01
-    hp['weight_decay'] = 0.001
+    hp['learn_rate'] = 0.03
+    hp['weight_decay'] = 0.0005
     # ========================
 
     return hp

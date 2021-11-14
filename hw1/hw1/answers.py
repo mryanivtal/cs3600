@@ -71,15 +71,37 @@ A model must be evaluated based on unseen data and not on the train data.
 # Part 3 answers
 
 part3_q1 = r"""
-**Your answer:**
+The value of Delta is arbitrary because the W is scaled by the optimization mechanism, and can be scaled up and down to get closer to a minimum,
+If delta is large the optimizer can compensate by adjusting the W values accordingly.
 """
 
 part3_q2 = r"""
-**Your answer:**
+**1. Interpretation: The model learns geometric features in the image, and where they are on the x, y axis.**
+The more differentiated (Noisy) areas look for details, while the more uniform areas can be thought of as "Masked", or less indicative.
+E.g. image 2 from the left learns whether there are horizontal lines in the top, bottom, middle of the image.
+Interpretation error example - In the 3rd line there is a four labeled by the model as a six, probably because it is missing the bottom 
+part which has a strong impact on the score.
+
+**2. Difference between KNN and SVM** - The SVM model is an actual learning model - it creates a model (weights) and applies the learned model to the samples in runtime
+KNN works very differently - it memorizes the train samples and then compares each runtime sample to all train samples and look for the closest one in the attribute space.
+Hence, the KNN does not have a "Feature extraction mechanism" like we see here.
+
 """
 
 part3_q3 = r"""
-**Your answer:**
+**1. I'd say the learning rate is a bit higher than optimal** - We can see the loss is a bit jumpy and not smooth and stable as it could be.
+Lowering it a bit woud probably give more stable behaviour.   Yet, it is stable enough to be effective and fast.
+- Higher learning rate would cause the graph to jump up and down much stronger, Very high would make it not converge.
+- Lower learning rate would produce smoother and more monotonic graph, but will converge slower.
+
+**2. I'd say the model is very slightly underfitted** - a few more epochs would probably get to a better result, but not many.
+This can be seen by the fact that the performance on the validation has almopst converged - accuracy is still raising but very lightly, 
+loss is still reducing but very lightly as well.
+The same is happening with the train data.
+- Overfit would be indicated by reduction in the performance on the validation set (loss going up, accuracy going down)
+- strong underfit would be indicated by strong improvement slopes in the validation set in epoch 30 (loss going down, accuracy up)
+ 
+
 """
 
 # ==============

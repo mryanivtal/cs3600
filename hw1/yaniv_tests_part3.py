@@ -186,6 +186,24 @@ class MyTestCase(unittest.TestCase):
         test.assertGreaterEqual(test_acc_after, 85.0)
 
 
+    def test_tensor_as_image(self):
+        import cs3600.plot as plot
+        from hw1.linear_classifier import LinearClassifier
+        test = self
+        self.setup()
+        dl_test = self.dl_test
+        dl_train = self.dl_train
+        dl_valid = self.dl_valid
+        n_features = self.n_features
+        n_classes = self.n_classes
+
+        hp = hw1linear.hyperparams()
+        lin_cls = hw1linear.LinearClassifier(n_features, n_classes, weight_std=hp['weight_std'])
+
+        w_images = lin_cls.weights_as_images(img_shape=(1, 28, 28))
+        fig, axes = plot.tensors_as_images(list(w_images))
+        plt.show()
+
 
 if __name__ == '__main__':
     unittest.main()

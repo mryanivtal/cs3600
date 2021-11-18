@@ -1,5 +1,6 @@
 import numpy as np
 import sklearn
+import pandas as pd
 from pandas import DataFrame
 from typing import List
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
@@ -7,6 +8,8 @@ from sklearn.utils import check_array
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.utils.validation import check_X_y, check_is_fitted
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer
 
 
 class LinearRegressor(BaseEstimator, RegressorMixin):
@@ -32,7 +35,7 @@ class LinearRegressor(BaseEstimator, RegressorMixin):
 
         y_pred = None
         # ====== YOUR CODE: ======
-        
+        y_pred = np.dot(X, self.weights_)
         # ========================
 
         return y_pred
@@ -51,7 +54,9 @@ class LinearRegressor(BaseEstimator, RegressorMixin):
 
         w_opt = None
         # ====== YOUR CODE: ======
-        
+        reg = np.eye(X.shape[1])
+        reg [0,0] = 0 
+        w_opt = np.linalg.inv(X.T.dot(X) + X.shape[0] * self.reg_lambda * reg).dot(X.T).dot(y)
         # ========================
 
         self.weights_ = w_opt
@@ -77,7 +82,11 @@ def fit_predict_dataframe(
     """
     # TODO: Implement according to the docstring description.
     # ====== YOUR CODE: ======
-    
+    if feature_names is None:
+	    return model.fit_predict(df.drop(target_name, axis=1), df[target_name])
+    else:
+        return model.fit_predict(df[feature_names], df[target_name])
+		
     # ========================
     return y_pred
 
@@ -92,6 +101,7 @@ class BiasTrickTransformer(BaseEstimator, TransformerMixin):
         the number of features.
         :returns: A tensor xb of shape (N,D+1) where xb[:, 0] == 1
         """
+		
         X = check_array(X, ensure_2d=True)
 
         # TODO:
@@ -100,7 +110,8 @@ class BiasTrickTransformer(BaseEstimator, TransformerMixin):
 
         xb = None
         # ====== YOUR CODE: ======
-        
+        bias = np.ones((X.shape[0],1))
+        xb = np.hstack((bias,X))
         # ========================
 
         return xb
@@ -139,7 +150,8 @@ class BostonFeaturesTransformer(BaseEstimator, TransformerMixin):
 
         X_transformed = None
         # ====== YOUR CODE: ======
-        
+        poly = PolynomialFeatures(self.degree)
+        X_transformed = poly.fit_transform(X)
         # ========================
 
         return X_transformed
@@ -163,7 +175,14 @@ def top_correlated_features(df: DataFrame, target_feature, n=5):
     # TODO: Calculate correlations with target and sort features by it
 
     # ====== YOUR CODE: ======
-    
+    corr = pd.DataFrame(df.corr()[target_feature].reset_index())
+    corr.columns = ['column','corr_coef']
+    corr = corr[corr['column']!='MEDV']
+    corr['corr_abs'] = corr['corr_coef'].abs()
+    corr = corr.sort_values('corr_abs',ascending=False)
+    corr = corr[:n]
+    top_n_features = corr['column']
+    top_n_corr = corr['corr_coef']
     # ========================
 
     return top_n_features, top_n_corr
@@ -179,7 +198,7 @@ def mse_score(y: np.ndarray, y_pred: np.ndarray):
 
     # TODO: Implement MSE using numpy.
     # ====== YOUR CODE: ======
-    
+    mse = (np.linalg.norm(y_pred-y)**2)/len(y)
     # ========================
     return mse
 
@@ -194,7 +213,10 @@ def r2_score(y: np.ndarray, y_pred: np.ndarray):
 
     # TODO: Implement R^2 using numpy.
     # ====== YOUR CODE: ======
-    
+    numerator = ((y - y_pred) ** 2).sum(axis=0)
+    denominator = ((y - np.average(y, axis=0)) ** 2).sum(axis=0)
+    output_scores = 1 - (numerator / denominator)
+    r2 = np.average(output_scores)
     # ========================
     return r2
 
@@ -227,7 +249,10 @@ def cv_best_hyperparams(
     #  - You can use MSE or R^2 as a score.
 
     # ====== YOUR CODE: ======
-   
+    param_grid = {"linearregressor__reg_lambda":lambda_range, "bostonfeaturestransformer__degree":degree_range}
+    clf = GridSearchCV(estimator = model, param_grid = param_grid, scoring = make_scorer(mse_score,  greater_is_better=False), cv = k_folds)
+    clf.fit(X, y)
+    best_params = clf.best_params_
     # ========================
 
     return best_params

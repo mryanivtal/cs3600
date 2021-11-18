@@ -1,10 +1,11 @@
-import numpy as np
 import torch
 from torch import Tensor
 from collections import namedtuple
 from torch.utils.data import DataLoader
+import numpy as np
 
 from .losses import ClassifierLoss
+
 
 class LinearClassifier(object):
     def __init__(self, n_features, n_classes, weight_std=0.001):
@@ -22,7 +23,6 @@ class LinearClassifier(object):
         #  Initialize it from a normal dist with zero mean and the given std.
 
         self.weights = None
-
         # ====== YOUR CODE: ======
         self.weights = torch.randn((n_features, n_classes)) * weight_std
         # ========================
@@ -74,13 +74,13 @@ class LinearClassifier(object):
         return acc * 100
 
     def train(
-            self,
-            dl_train: DataLoader,
-            dl_valid: DataLoader,
-            loss_fn: ClassifierLoss,
-            learn_rate=0.1,
-            weight_decay=0.001,
-            max_epochs=100,
+        self,
+        dl_train: DataLoader,
+        dl_valid: DataLoader,
+        loss_fn: ClassifierLoss,
+        learn_rate=0.1,
+        weight_decay=0.001,
+        max_epochs=100,
     ):
 
         Result = namedtuple("Result", "accuracy loss")
@@ -104,7 +104,6 @@ class LinearClassifier(object):
             #     using the weight_decay parameter.
 
             # ====== YOUR CODE: ======
-
             # Train one full epoch:
             for batch_idx, (x, y) in enumerate(dl_train):
                 y_pred, class_scores = self.predict(x)                          # predict using existing weights
@@ -128,14 +127,11 @@ class LinearClassifier(object):
             valid_res.loss.append(epoch_valid_loss)
 
             # Test stop conditions
-
             # ========================
             print(".", end="")
 
         print("")
         return train_res, valid_res
-
-
     def evaluate_epoch_accuracy_and_loss(self, dl_data: DataLoader, loss_fn:ClassifierLoss, regularization: float) -> (float, float):
         batch_train_accuracy = []
         batch_num_samples = []
@@ -155,7 +151,6 @@ class LinearClassifier(object):
         epoch_avg_loss = batch_loss.sum() / batch_num_samples.sum()
 
         return epoch_train_accuracy, epoch_avg_loss
-
 
     def weights_as_images(self, img_shape, has_bias=True):
         """

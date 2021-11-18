@@ -27,7 +27,7 @@ part1_q1 = r"""
 
 part1_q2 = r"""
 **This is a wrong approach.**     
-As mentioned above, teh test set should be used only to measure the generalization error of the model on unseen data and 
+As mentioned above, the test set should be used only to measure the generalization error of the model on unseen data and 
 evaluate its performance.   Since in this case the test data was used to tune a hyperparameter, the model is already 
 biased towards this data and this could lead to unrealistic lower error estimation of the model.
 The right way here is tho split the data to three separate parts - Train, Validation, Test. 
@@ -81,7 +81,6 @@ The more differentiated (Noisy) areas look for details, while the more uniform a
 E.g. image 2 from the left learns whether there are horizontal lines in the top, bottom, middle of the image.
 Interpretation error example - In the 3rd line there is a four labeled by the model as a six, probably because it is missing the bottom 
 part which has a strong impact on the score.
-
 **2. Difference between KNN and SVM** - The SVM model is an actual learning model - it creates a model (weights) and applies the learned model to the samples in runtime
 KNN works very differently - it memorizes the train samples and then compares each runtime sample to all train samples and look for the closest one in the attribute space.
 Hence, the KNN does not have a "Feature extraction mechanism" like we see here.
@@ -101,7 +100,6 @@ The same is happening with the train data.
 - Overfit would be indicated by reduction in the performance on the validation set (loss going up, accuracy going down)
 - strong underfit would be indicated by strong improvement slopes in the validation set in epoch 30 (loss going down, accuracy up)
  
-
 """
 
 # ==============
@@ -110,15 +108,23 @@ The same is happening with the train data.
 # Part 4 answers
 
 part4_q1 = r"""
-**Your answer:**
+**The ideal pattern to see in the residual plot is values equally and randomly spaced around the horizontal axis.
+Based on the residual plot we got above we can see that generally our model fits the data well and looks similar in the train and test data except of sepcifc outliers.
+We can see in the top-5 features plot that the residuals values are higher than our final plot after CV beacuse we have more errors there.**
 """
 
 part4_q2 = r"""
-**Your answer:**
+  1.It is still linear model that finds linear function on the new features, but when returning back to the original features we are getting non linear function which maps them to the target.
+
+  2. Yes, we should do approiate features engineering to represent our fetaures accordingly.
+  
+  3. It depends on the non linear features mapping we did, but generally speacking the bounday won't be hyperplane but a non linear decision boundary because we got non linear function.
 """
 
 part4_q3 = r"""
-**Your answer:**
+1. Because we using lambda parameter in multiplications and it gives more reasonable values in the range to look for when using logspace. The advantage for CV is doing hyper paramters search without doing overfiiting on the validation set because we are changing the validatin set in each cyle. By that, we should get model that will better generalize and perform on unseen data.
+
+2. len(degree_range) * len(lambda_range) = 60
 """
 
 # ==============

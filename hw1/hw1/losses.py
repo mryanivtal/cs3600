@@ -2,6 +2,7 @@ import abc
 import torch
 import numpy as np
 
+
 class ClassifierLoss(abc.ABC):
     """
     Represents a loss function of a classifier.
@@ -52,7 +53,6 @@ class SVMHingeLoss(ClassifierLoss):
 
         loss = None
         # ====== YOUR CODE: ======
-        #-----------------------------vecrtorized solution
         num_samples = x_scores.shape[0]
 
         marginal_loss = x_scores + self.delta
@@ -62,22 +62,6 @@ class SVMHingeLoss(ClassifierLoss):
 
         per_sample_loss = marginal_loss.sum(axis=1)
         loss = per_sample_loss.mean()
-
-        #-----------------------------Non-vecrtorized solution
-        # num_categories = x_scores.shape[1]
-        #
-        # loss = 0
-        # for i, y_sample in enumerate(y):
-        #     loss_sample = 0
-        #     x_score_sample = x_scores[i, :]
-        #     y_score_sample = x_score_sample[y_sample]
-        #     for j in range(num_categories):
-        #         if y_sample != j:
-        #             iter_loss = max(0, self.delta + x_score_sample[j] - y_score_sample)
-        #             loss_sample += iter_loss
-        #
-        #     loss += loss_sample
-        # loss = loss / num_samples
 
         # ========================
 
@@ -113,6 +97,7 @@ class SVMHingeLoss(ClassifierLoss):
         row_sum = torch.sum(non_zero_marginal_loss, axis=1)
         non_zero_marginal_loss[np.arange(num_samples), y] = -row_sum.T
         grad = (x.T @ non_zero_marginal_loss) / num_samples
+        
         # ========================
 
         return grad

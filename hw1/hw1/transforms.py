@@ -72,5 +72,4 @@ class BiasTrick(object):
         bias = torch.ones(bias_dimension, dtype=x.dtype)
         x_biased = torch.cat((bias, x), axis=-1)
         return x_biased
-        
         # ========================

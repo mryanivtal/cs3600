@@ -80,7 +80,7 @@ class Trainer(abc.ABC):
             #    save the model to the file specified by the checkpoints
             #    argument.
             # ====== YOUR CODE: ======
-
+            pass
             # ========================
 
         return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc)
@@ -201,7 +201,8 @@ class LayerTrainer(Trainer):
         #    not a tensor) as num_correct.
         # ====== YOUR CODE: ======
         # Forward pass
-
+        prediction = self.optimizer(batch, self.model)
+        print()
         # Backward pass
 
         # Optimizer step
@@ -218,7 +219,7 @@ class LayerTrainer(Trainer):
         # TODO: Evaluate the Layer model on one batch of data.
         # ====== YOUR CODE: ======
         # Forward pass
-
+        pass
         # Calculate accuracy
         
         # ========================
@@ -244,6 +245,7 @@ class TorchTrainer(Trainer):
         #tip: use loss = loss.item() in the end
         # ====== YOUR CODE: ======
         # Forward pass
+        pass
 
         # Backward pass
 
@@ -267,6 +269,7 @@ class TorchTrainer(Trainer):
             #  - Calculate number of correct predictions
             # ====== YOUR CODE: ======
             # Forward pass
+            pass
 
             # Calculate accuracy
 

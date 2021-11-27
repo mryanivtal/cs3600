@@ -1,6 +1,7 @@
 import abc
 import torch
 from torch import Tensor
+import numpy as np
 
 
 class Optimizer(abc.ABC):
@@ -53,7 +54,7 @@ class Optimizer(abc.ABC):
 
 
 class VanillaSGD(Optimizer):
-    def __init__(self, params, learn_rate=1e-3, reg=0):
+    def __init__(self, params: list, learn_rate=1e-3, reg=0):
         """
         :param params: The model parameters to optimize
         :param learn_rate: Learning rate
@@ -72,7 +73,8 @@ class VanillaSGD(Optimizer):
             #  Update the gradient according to regularization and then
             #  update the parameters tensor.
             # ====== YOUR CODE: ======
-
+            dp += self.reg * p
+            p -= self.learn_rate * dp
             # ========================
 
 

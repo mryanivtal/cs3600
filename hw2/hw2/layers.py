@@ -238,8 +238,8 @@ class Linear(Layer):
         # deviation of `wstd`. Init bias to zero.
         #tip: use torch.randn
         # ====== YOUR CODE: ======
-        pass
-
+        self.w = torch.randn((out_features, in_features)) * wstd
+        self.b = torch.zeros(out_features)
         # ========================
 
         # These will store the gradients
@@ -259,8 +259,7 @@ class Linear(Layer):
 
         # TODO: Compute the affine transform
         # ====== YOUR CODE: ======
-        pass
-
+        out = x @ self.w.T + self.b
         # ========================
 
         self.grad_cache["x"] = x
@@ -279,8 +278,11 @@ class Linear(Layer):
         #   - db, the gradient of the loss with respect to b
         #  Note: You should ACCUMULATE gradients in dw and db.
         # ====== YOUR CODE: ======
-        pass
+        dout_dx = self.w.T
+        dx = dout @ dout_dx.T
 
+        self.dw += dout.T @ x
+        self.db += 1 * dout.sum(axis=0)
         # ========================
 
         return dx

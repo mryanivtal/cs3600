@@ -21,9 +21,10 @@ class MyTestCase(unittest.TestCase):
             test.assertLess(diff, delta)
 
 
-    def test_layer(self):
+    def test_lrelu(self):
         # ----------------- pycharm test block -------------
         test = self
+        test_block_grad = self.test_block_grad
         # --------------------------------------------------
 
         N = 100
@@ -42,10 +43,111 @@ class MyTestCase(unittest.TestCase):
         test.assertTrue(torch.allclose(z, torch.nn.LeakyReLU(alpha)(x_test), atol=eps))
 
         # Test backward pass
-        self.test_block_grad(lrelu, x_test)
+        test_block_grad(lrelu, x_test)
         # assert(True)
 
+    def test_relu(self):
+        # ----------------- pycharm test block -------------
+        test = self
+        test_block_grad = self.test_block_grad
 
+        N = 100
+        in_features = 200
+        num_classes = 10
+        eps = 1e-6
+        # --------------------------------------------------
+
+        # Test ReLU
+        relu = layers.ReLU()
+        x_test = torch.randn(N, in_features)
+
+        # Test forward pass
+        z = relu(x_test)
+        test.assertSequenceEqual(z.shape, x_test.shape)
+        test.assertTrue(torch.allclose(z, torch.relu(x_test), atol=eps))
+
+        # Test backward pass
+        test_block_grad(relu, x_test)
+
+
+    def test_sigmoid(self):
+        # ----------------- pycharm test block -------------
+        test = self
+        test_block_grad = self.test_block_grad
+
+        N = 100
+        in_features = 200
+        num_classes = 10
+        eps = 1e-6
+        # --------------------------------------------------
+
+        # Test Sigmoid
+        sigmoid = layers.Sigmoid()
+        x_test = torch.randn(N, in_features, in_features)  # 3D input should work
+
+        # Test forward pass
+        z = sigmoid(x_test)
+        test.assertSequenceEqual(z.shape, x_test.shape)
+        test.assertTrue(torch.allclose(z, torch.sigmoid(x_test), atol=eps))
+
+        # Test backward pass
+        test_block_grad(sigmoid, x_test)
+
+    def test_tanh(self):
+        # ----------------- pycharm test block -------------
+        test = self
+        test_block_grad = self.test_block_grad
+
+        N = 100
+        in_features = 200
+        num_classes = 10
+        eps = 1e-6
+        # --------------------------------------------------
+
+        # Test TanH
+        tanh = layers.TanH()
+        x_test = torch.randn(N, in_features, in_features)  # 3D input should work
+
+        # Test forward pass
+        z = tanh(x_test)
+        test.assertSequenceEqual(z.shape, x_test.shape)
+        test.assertTrue(torch.allclose(z, torch.tanh(x_test), atol=eps))
+
+        # Test backward pass
+        test_block_grad(tanh, x_test)
+
+    def test_linear(self):
+        # ----------------- pycharm test block -------------
+        test = self
+        test_block_grad = self.test_block_grad
+
+        N = 100
+        in_features = 200
+        num_classes = 10
+        eps = 1e-6
+        # --------------------------------------------------
+
+        # Test Linear
+        out_features = 1000
+        fc = layers.Linear(in_features, out_features)
+        x_test = torch.randn(N, in_features)
+
+        # Test forward pass
+        z = fc(x_test)
+        test.assertSequenceEqual(z.shape, [N, out_features])
+        torch_fc = torch.nn.Linear(in_features, out_features, bias=True)
+        torch_fc.weight = torch.nn.Parameter(fc.w)
+        torch_fc.bias = torch.nn.Parameter(fc.b)
+        test.assertTrue(torch.allclose(torch_fc(x_test), z, atol=eps))
+
+        # Test backward pass
+        test_block_grad(fc, x_test)
+
+        # Test second backward pass
+        x_test = torch.randn(N, in_features)
+        z = fc(x_test)
+        z = fc(x_test)
+        test_block_grad(fc, x_test)
 
 
 

@@ -150,6 +150,31 @@ class MyTestCase(unittest.TestCase):
         test_block_grad(fc, x_test)
 
 
+    def test_cross_entropy(self):
+        # ----------------- pycharm test block -------------
+        test = self
+        test_block_grad = self.test_block_grad
+
+        N = 100
+        in_features = 200
+        num_classes = 10
+        eps = 1e-6
+        # --------------------------------------------------
+
+        # Test CrossEntropy
+        cross_entropy = layers.CrossEntropyLoss()
+        scores = torch.randn(N, num_classes)
+        labels = torch.randint(low=0, high=num_classes, size=(N,), dtype=torch.long)
+
+        # Test forward pass
+        loss = cross_entropy(scores, labels)
+        expected_loss = torch.nn.functional.cross_entropy(scores, labels)
+        test.assertLess(torch.abs(expected_loss - loss).item(), 1e-5)
+        print('loss=', loss.item())
+
+        # Test backward pass
+        test_block_grad(cross_entropy, scores, y=labels)
+
 
 if __name__ == '__main__':
     unittest.main()

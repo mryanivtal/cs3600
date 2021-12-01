@@ -441,8 +441,8 @@ class Sequential(Layer):
 
         # TODO: Return the parameter tuples from all layers.
         # ====== YOUR CODE: ======
-        pass
-
+        for layer in self.layers:
+            params = params + layer.params()
         # ========================
 
         return params

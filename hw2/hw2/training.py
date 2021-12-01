@@ -1,3 +1,4 @@
+import numpy as np
 import os
 import abc
 import sys
@@ -201,13 +202,13 @@ class LayerTrainer(Trainer):
         #    not a tensor) as num_correct.
         # ====== YOUR CODE: ======
         # Forward pass
-        prediction = self.optimizer(batch, self.model)
-        print()
-        # Backward pass
-
-        # Optimizer step
-
-        # Calculate accuracy
+        prediction_scores = self.model.forward(X.flatten(start_dim=1))
+        grads = self.model.backward(prediction_scores)       # Backward pass
+        self.optimizer.step()        # Optimizer step
+        prediction_scores = self.model.forward(X.flatten(start_dim=1))
+        prediction_y = prediction_scores.argmax(axis=0)
+        num_correct = np.count_nonzero(prediction_y == y)
+        loss = self.loss_fn(X.flatten(start_dim=1), y)      # Calculate accuracy
         
         # ========================
 

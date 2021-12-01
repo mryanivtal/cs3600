@@ -206,10 +206,9 @@ class LayerTrainer(Trainer):
         grads = self.model.backward(prediction_scores)       # Backward pass
         self.optimizer.step()        # Optimizer step
         prediction_scores = self.model.forward(X.flatten(start_dim=1))
-        prediction_y = prediction_scores.argmax(axis=0)
+        prediction_y = prediction_scores.argmax(axis=1)
         num_correct = np.count_nonzero(prediction_y == y)
         loss = self.loss_fn(X.flatten(start_dim=1), y)      # Calculate accuracy
-        
         # ========================
 
         return BatchResult(loss, num_correct)

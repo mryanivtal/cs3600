@@ -323,8 +323,13 @@ class CrossEntropyLoss(Layer):
         # TODO: Compute the cross entropy loss using the last formula from the
         #  notebook (i.e. directly using the class scores).
         # ====== YOUR CODE: ======
-        loss = -1 * (x[range(100), y]) + torch.log(torch.exp(x).sum(axis=1))
-        loss = loss.sum()
+
+        # CE loss per sample
+        loss = -1 * (x[range(x.shape[0]), y]) + torch.log(torch.exp(x).sum(axis=1))
+
+        # Mean CE loss over all samples
+        loss = loss.mean()
+
         # ========================
 
         self.grad_cache["x"] = x
@@ -343,8 +348,10 @@ class CrossEntropyLoss(Layer):
 
         # TODO: Calculate the gradient w.r.t. the input x.
         # ====== YOUR CODE: ======
-        pass
-
+        dx = torch.zeros_like(x)
+        dx[range(x.shape[0]), y] = -1
+        dx += (1 / (torch.exp(x).sum(axis=1)).unsqueeze(axis=1)) * torch.exp(x)
+        dx /= N
         # ========================
 
         return dx

@@ -415,7 +415,7 @@ class Sequential(Layer):
         out = x
 
         for layer in self.layers:
-            out = layer.forward(out)
+            out = layer.forward(out, **kw)
         # ========================
 
         return out
@@ -506,8 +506,18 @@ class MLP(Layer):
             
         # TODO: Build the MLP architecture as described.
         # ====== YOUR CODE: ======
-        pass
+        num_hidden_layers = len(hidden_features)
+        layers = []
+        layer_in_dim = in_features
 
+        for i in range(num_hidden_layers):
+            layer_out_dim = hidden_features[i]
+            layers.append(Linear(layer_in_dim, layer_out_dim))
+            layers.append(activation_cls())
+            layer_in_dim = layer_out_dim
+
+        # Add last FC layer
+        layers.append(Linear(layer_in_dim, num_classes))
         # ========================
 
         self.sequence = Sequential(*layers)

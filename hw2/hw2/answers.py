@@ -9,9 +9,9 @@ math (delimited with $$).
 # Part 1 answers
 
 part1_q1 = r"""
-**Your answer:**
+1. **The shape of the jacobian will be (128 x 1024 x 2048)** 
+2.  **1 GB** = 1,073,741,824 byte = (1024 input features) x (2048 output features) x (128 vectors) x  (4 byte/element)
 """
-
 # ==============
 # Part 2 answers
 

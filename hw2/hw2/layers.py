@@ -412,8 +412,10 @@ class Sequential(Layer):
         # TODO: Implement the forward pass by passing each layer's output
         #  as the input of the next.
         # ====== YOUR CODE: ======
-        pass
+        out = x
 
+        for layer in self.layers:
+            out = layer.forward(out)
         # ========================
 
         return out
@@ -425,7 +427,10 @@ class Sequential(Layer):
         #  Each layer's input gradient should be the previous layer's output
         #  gradient. Behold the backpropagation algorithm in action!
         # ====== YOUR CODE: ======
-        pass
+        din = dout
+
+        for layer in self.layers[::-1]:
+            din = layer.backward(din)
 
         # ========================
 

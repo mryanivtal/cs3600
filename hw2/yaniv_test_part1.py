@@ -176,5 +176,43 @@ class MyTestCase(unittest.TestCase):
         test_block_grad(cross_entropy, scores, y=labels)
 
 
+    def test_build_model(self):
+        # ----------------- pycharm test block -------------
+        test = self
+        test_block_grad = self.test_block_grad
+
+        N = 100
+        in_features = 200
+        num_classes = 10
+        eps = 1e-6
+        # --------------------------------------------------
+
+        # Test Sequential
+        # Let's create a long sequence of layers and see
+        # whether we can compute end-to-end gradients of the whole thing.
+
+        seq = layers.Sequential(
+            layers.Linear(in_features, 100),
+            layers.Linear(100, 200),
+            layers.Linear(200, 100),
+            layers.ReLU(),
+            layers.Linear(100, 500),
+            layers.LeakyReLU(alpha=0.01),
+            layers.Linear(500, 200),
+            layers.ReLU(),
+            layers.Linear(200, 500),
+            layers.LeakyReLU(alpha=0.1),
+            layers.Linear(500, 1),
+            layers.Sigmoid(),
+        )
+        x_test = torch.randn(N, in_features)
+
+        # Test forward pass
+        z = seq(x_test)
+        test.assertSequenceEqual(z.shape, [N, 1])
+
+        # Test backward pass
+        test_block_grad(seq, x_test)
+
 if __name__ == '__main__':
     unittest.main()

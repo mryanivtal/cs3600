@@ -81,7 +81,31 @@ class Trainer(abc.ABC):
             #    save the model to the file specified by the checkpoints
             #    argument.
             # ====== YOUR CODE: ======
-            pass
+            # Train inference
+            train_epoch_result = self.train_epoch(dl_train, verbose=verbose)
+            train_loss.append(train_epoch_result.losses)
+            train_acc.append(train_epoch_result.accuracy)
+
+            # Test inference
+            test_epoch_result = self.test_epoch(dl_test, verbose=verbose)
+            test_loss.append(test_epoch_result.losses)
+            test_acc.append(test_epoch_result.accuracy)
+
+            actual_num_epochs += 1
+
+            # log kpis per epoch
+            if actual_num_epochs > 1 and test_acc[-1] <= test_acc[-2]:
+                epochs_without_improvement += 1
+            else:
+                epochs_without_improvement = 0
+
+            # Log best accuracy
+            if best_acc is not None and best_acc < test_acc:
+                best_acc = test_acc
+
+            # early stop
+            if early_stopping is not None and epochs_without_improvement >= early_stopping:
+                break
             # ========================
 
         return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc)
@@ -219,10 +243,12 @@ class LayerTrainer(Trainer):
 
         # TODO: Evaluate the Layer model on one batch of data.
         # ====== YOUR CODE: ======
-        # Forward pass
-        pass
+        prediction_scores = self.model.forward(X.flatten(start_dim=1))
+        prediction_y = prediction_scores.argmax(axis=1)
+
         # Calculate accuracy
-        
+        num_correct = np.count_nonzero(prediction_y == y)
+        loss = self.loss_fn(prediction_scores, y)      # Calculate accuracy
         # ========================
 
         return BatchResult(loss, num_correct)

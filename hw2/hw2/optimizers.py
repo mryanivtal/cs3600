@@ -93,7 +93,7 @@ class MomentumSGD(Optimizer):
 
         # TODO: Add your own initializations as needed.
         # ====== YOUR CODE: ======
-
+        self.cached_params = dict()
         # ========================
 
     def step(self):
@@ -105,7 +105,13 @@ class MomentumSGD(Optimizer):
             # update the parameters tensor based on the velocity. Don't forget
             # to include the regularization term.
             # ====== YOUR CODE: ======
+            dp += self.reg * p
 
+            v_prev = self.cached_params['v']
+            v = self.momentum * v_prev - self.learn_rate * dp
+            self.cached_params['v'] = v
+
+            p += v
             # ========================
 
 

@@ -200,15 +200,16 @@ class LayerTrainer(Trainer):
         #  - Optimize params
         #  - Calculate number of correct predictions (make sure it's an int,
         #    not a tensor) as num_correct.
+
         # ====== YOUR CODE: ======
-        # Forward pass
-        prediction_scores = self.model.forward(X.flatten(start_dim=1))
-        grads = self.model.backward(prediction_scores)       # Backward pass
+        prediction_scores = self.model.forward(X.flatten(start_dim=1))    # Forward pass
+        loss = self.loss_fn(prediction_scores, y)      # Calculate accuracy
+        dy_dloss = self.loss_fn.backward()
+        self.model.backward(dy_dloss)       # Backward pass
         self.optimizer.step()        # Optimizer step
         prediction_scores = self.model.forward(X.flatten(start_dim=1))
         prediction_y = prediction_scores.argmax(axis=1)
         num_correct = np.count_nonzero(prediction_y == y)
-        loss = self.loss_fn(X.flatten(start_dim=1), y)      # Calculate accuracy
         # ========================
 
         return BatchResult(loss, num_correct)

@@ -63,7 +63,7 @@ class MyTestCase(unittest.TestCase):
         from torch.utils.data import DataLoader
 
         # Overfit to a very small dataset of 20 samples
-        batch_size = 20
+        batch_size = 10
         max_batches = 2
         dl_train = torch.utils.data.DataLoader(ds_train, batch_size, shuffle=False)
 
@@ -104,31 +104,33 @@ class MyTestCase(unittest.TestCase):
         from torch.utils.data import DataLoader
 
         # Overfit to a very small dataset of 20 samples
-        batch_size = 20
+        batch_size = 10
         max_batches = 2
         dl_train = torch.utils.data.DataLoader(ds_train, batch_size, shuffle=False)
 
         # Get hyperparameters
-        for wstd in [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]:
-            for lr in [0.0005, 0.001, 0.005, 0.008, 0.1, 0.15, 0.2]:
+        for wstd in [0.01, 0.05, 0.1]:
+            for lr in [0.001, 0.005, 0.01, 0.05, 0.1]:
+                for reg in [0.00]:
+                    print(wstd, lr, reg)
 
-                hp = dict(wstd=wstd, lr=lr, reg=0)
+                    hp = dict(wstd=wstd, lr=lr, reg=reg)
 
-                torch.manual_seed(seed)
+                    torch.manual_seed(seed)
 
-                # Build a model and loss using our custom MLP and CE implementations
-                model = layers.MLP(3 * 32 * 32, num_classes=10, hidden_features=[128] * 3, wstd=hp['wstd'])
-                loss_fn = layers.CrossEntropyLoss()
+                    # Build a model and loss using our custom MLP and CE implementations
+                    model = layers.MLP(3 * 32 * 32, num_classes=10, hidden_features=[128] * 3, wstd=hp['wstd'])
+                    loss_fn = layers.CrossEntropyLoss()
 
-                # Use our custom optimizer
-                optimizer = optimizers.VanillaSGD(model.params(), learn_rate=hp['lr'], reg=hp['reg'])
+                    # Use our custom optimizer
+                    optimizer = optimizers.VanillaSGD(model.params(), learn_rate=hp['lr'], reg=hp['reg'])
 
-                # Run training over small dataset multiple times
-                trainer = training.LayerTrainer(model, loss_fn, optimizer)
-                best_acc = 0
-                for i in range(20):
-                    res = trainer.train_epoch(dl_train, max_batches=max_batches)
-                    best_acc = res.accuracy if res.accuracy > best_acc else best_acc
+                    # Run training over small dataset multiple times
+                    trainer = training.LayerTrainer(model, loss_fn, optimizer)
+                    best_acc = 0
+                    for i in range(20):
+                        res = trainer.train_epoch(dl_train, max_batches=max_batches)
+                        best_acc = res.accuracy if res.accuracy > best_acc else best_acc
 
         test.assertGreaterEqual(best_acc, 98)
 

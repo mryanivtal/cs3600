@@ -278,11 +278,11 @@ class Linear(Layer):
         #   - db, the gradient of the loss with respect to b
         #  Note: You should ACCUMULATE gradients in dw and db.
         # ====== YOUR CODE: ======
-        dout_dx = self.w.T
-        dx = dout @ dout_dx.T
+        dout_dx = self.w
+        dx = dout @ dout_dx
 
         self.dw += dout.T @ x
-        self.db += 1 * dout.sum(axis=0)
+        self.db += dout.sum(axis=0)
         # ========================
 
         return dx
@@ -325,7 +325,7 @@ class CrossEntropyLoss(Layer):
         # ====== YOUR CODE: ======
 
         # CE loss per sample
-        loss = -1 * (x[range(x.shape[0]), y]) + torch.log(torch.exp(x).sum(axis=1))
+        loss = -1 * (x[range(N), y]) + torch.log(torch.exp(x).sum(axis=1))
 
         # Mean CE loss over all samples
         loss = loss.mean()

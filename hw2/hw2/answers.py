@@ -31,7 +31,7 @@ def part2_optim_hp():
     # TODO: Tweak the hyperparameters to get the best results you can.
     # You may want to use different learning rates for each optimizer.
     # ====== YOUR CODE: ======
-    wstd, lr_vanilla, lr_momentum, lr_rmsprop, reg, = 0.01, 1e-05, 1e-05, 0, 5e-05
+    wstd, lr_vanilla, lr_momentum, lr_rmsprop, reg, = 0.01, 1e-05, 5e-06, 0, 5e-05
     # ========================
     return dict(
         wstd=wstd,
@@ -52,11 +52,11 @@ def part2_dropout_hp():
 
 
 part2_q1 = r"""
-**Your answer:**
+**Not done - related to bonus question:**
 """
 
 part2_q2 = r"""
-**Your answer:**
+**Yes**
 
 """
 # ==============

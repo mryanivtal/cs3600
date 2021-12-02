@@ -93,11 +93,13 @@ class MomentumSGD(Optimizer):
 
         # TODO: Add your own initializations as needed.
         # ====== YOUR CODE: ======
-        self.cached_params = dict()
+        self.momentum_v = list()
+        for param_tuple in self.params:
+            self.momentum_v.append(torch.zeros_like(param_tuple[0]))
         # ========================
 
     def step(self):
-        for p, dp in self.params:
+        for param_idx, (p, dp) in enumerate(self.params):
             if dp is None:
                 continue
 
@@ -106,12 +108,11 @@ class MomentumSGD(Optimizer):
             # to include the regularization term.
             # ====== YOUR CODE: ======
             dp += self.reg * p
-
-            v_prev = self.cached_params['v']
+            v_prev = self.momentum_v[param_idx]
             v = self.momentum * v_prev - self.learn_rate * dp
-            self.cached_params['v'] = v
-
             p += v
+
+            self.momentum_v[param_idx] = v
             # ========================
 
 

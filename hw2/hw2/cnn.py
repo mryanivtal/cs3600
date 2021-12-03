@@ -6,6 +6,8 @@ from typing import Sequence
 ACTIVATIONS = {"relu": nn.ReLU, "lrelu": nn.LeakyReLU}
 POOLINGS = {"avg": nn.AvgPool2d, "max": nn.MaxPool2d}
 
+def layer_shape(x, k=1, p=0, s=1, d=1):
+    return int(((x + 2*p - d*(k - 1) - 1)/s) + 1)
 
 class ConvClassifier(nn.Module):
     """
@@ -77,11 +79,32 @@ class ConvClassifier(nn.Module):
         #  Note: If N is not divisible by P, then N mod P additional
         #  CONV->ACTs should exist at the end, without a POOL after them.
         # ====== YOUR CODE: ======
-
+        
+        N = len(self.channels)
+        P = self.pool_every
+        leng = int(N/P)
+        rem = N%P
+        n_features = in_w
+		
         # ========================
+        for i in range(leng):
+            for j in range(P):
+                layers.append(nn.Conv2d(in_channels=in_channels, out_channels= self.channels[i], kernel_size=self.conv_params['kernel_size'], padding=self.conv_params['padding'], stride=self.conv_params['stride']))
+                layers.append(ACTIVATIONS[self.activation_type](**self.activation_params))
+                in_channels = self.channels[i]
+                n_features = layer_shape(n_features, k = self.conv_params['kernel_size'], p = self.conv_params['padding'], s = self.conv_params['stride'])
+            layers.append(POOLINGS[self.pooling_type](**self.pooling_params))
+            n_features = layer_shape(n_features, k=layers[-1].kernel_size,s=layers[-1].stride)
+			
+        for j in range(0,rem):
+            layers.append(nn.Conv2d(in_channels=in_channels, out_channels= self.channels[i], kernel_size=self.conv_params['kernel_size'], padding=self.conv_params['padding'], stride=self.conv_params['stride']))
+            i+=1
+            n_features = layer_shape(n_features, k = self.conv_params['kernel_size'], p = self.conv_params['padding'], s = self.conv_params['stride'])
+        
+        self.n_features = n_features * n_features * in_channels
         seq = nn.Sequential(*layers)
         return seq
-
+				
     def _n_features(self) -> int:
         """
         Calculates the number of extracted features going into the the classifier part.
@@ -91,7 +114,7 @@ class ConvClassifier(nn.Module):
         rng_state = torch.get_rng_state()
         try:
             # ====== YOUR CODE: ======
-
+            return self.n_features			   
             # ========================
         finally:
             torch.set_rng_state(rng_state)
@@ -106,7 +129,12 @@ class ConvClassifier(nn.Module):
         #  (FC -> ACT)*M -> Linear
         #  The last Linear layer should have an output dim of out_classes.
         # ====== YOUR CODE: ======
-
+        in_channels = n_features
+        for hidden in self.hidden_dims:
+            layers.append(nn.Linear(in_channels, hidden))
+            in_channels = hidden
+            layers.append(ACTIVATIONS[self.activation_type](**self.activation_params))
+        layers.append(nn.Linear(in_channels, self.out_classes))
         # ========================
 
         seq = nn.Sequential(*layers)
@@ -117,10 +145,12 @@ class ConvClassifier(nn.Module):
         #  Extract features from the input, run the classifier on them and
         #  return class scores.
         # ====== YOUR CODE: ======
+        out = self.feature_extractor(x)
+        out = out.view(out.size(0), -1)
+        out = self.classifier(out)
 
         # ========================
         return out
-
 
 class ResidualBlock(nn.Module):
     """

@@ -82,13 +82,13 @@ class Trainer(abc.ABC):
             #    argument.
             # ====== YOUR CODE: ======
             # Train inference
-            train_epoch_result = self.train_epoch(dl_train, verbose=verbose)
-            train_loss.append(train_epoch_result.losses)
+            train_epoch_result = self.train_epoch(dl_train, **kw)
+            train_loss.extend(train_epoch_result.losses)
             train_acc.append(train_epoch_result.accuracy)
 
             # Test inference
-            test_epoch_result = self.test_epoch(dl_test, verbose=verbose)
-            test_loss.append(test_epoch_result.losses)
+            test_epoch_result = self.test_epoch(dl_test, **kw)
+            test_loss.extend(test_epoch_result.losses)
             test_acc.append(test_epoch_result.accuracy)
 
             actual_num_epochs += 1
@@ -228,8 +228,8 @@ class LayerTrainer(Trainer):
         # ====== YOUR CODE: ======
         prediction_scores = self.model.forward(X.flatten(start_dim=1))    # Forward pass
         loss = self.loss_fn(prediction_scores, y)      # Calculate accuracy
-        dy_dloss = self.loss_fn.backward()
-        self.model.backward(dy_dloss)       # Backward pass
+        dy_dloss = self.loss_fn.backward()      # Backward pass
+        self.model.backward(dy_dloss)
         self.optimizer.step()        # Optimizer step
         prediction_scores = self.model.forward(X.flatten(start_dim=1))
         prediction_y = prediction_scores.argmax(axis=1)

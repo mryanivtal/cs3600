@@ -1,9 +1,12 @@
+import pickle
 import unittest
 
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 import unittest
+
+import pandas as pd
 import torch
 import torchvision
 import torchvision.transforms as tvtf
@@ -113,7 +116,7 @@ class MyTestCase(unittest.TestCase):
         # Get hyperparameters
         for wstd in [0.01, 0.05, 0.1]:
             for lr in [0.001, 0.005, 0.01, 0.05, 0.1]:
-                for reg in [0.00]:
+                for reg in [0.00, 0.001, 0.01, 0.1]:
                     print(wstd, lr, reg)
 
                     hp = dict(wstd=wstd, lr=lr, reg=reg)
@@ -225,6 +228,68 @@ class MyTestCase(unittest.TestCase):
         fig_optim = None
         fig_optim = train_with_optimizer('momentum', optimizers.MomentumSGD, fig_optim)
         fig_optim
+
+    def test_search_vanilla(self):
+        # ------- pycarm block- -------
+        self.setup()
+        test = self
+        seed = self.seed
+        data_dir = self.data_dir
+        ds_train = self.ds_train
+        ds_test = self.ds_test
+        from cs3600.plot import plot_fit
+        # ----------------------------
+        import pandas as pd
+        import pickle
+        ##======================todo:yaniv:delete!=============================================
+        ##======================todo:yaniv:delete!=============================================
+        ##======================todo:yaniv:delete!=============================================
+
+        # Define a larger part of the CIFAR-10 dataset (still not the whole thing)
+        batch_size = 50
+        max_batches = 100
+        in_features = 3 * 32 * 32
+        num_classes = 10
+        dl_train = torch.utils.data.DataLoader(ds_train, batch_size, shuffle=False)
+        dl_test = torch.utils.data.DataLoader(ds_test, batch_size // 2, shuffle=False)
+
+        # Define a function to train a model with our Trainer and various optimizers
+        def train_with_optimizer(opt_name, opt_class, hp):
+            torch.manual_seed(seed)
+
+            # Get hyperparameters
+            hidden_features = [128] * 5
+            num_epochs = 10
+
+            # Create model, loss and optimizer instances
+            model = layers.MLP(in_features, num_classes, hidden_features, wstd=hp['wstd'])
+            loss_fn = layers.CrossEntropyLoss()
+            optimizer = opt_class(model.params(), learn_rate=hp[f'lr_{opt_name}'], reg=hp['reg'])
+
+            # Train with the Trainer
+            trainer = training.LayerTrainer(model, loss_fn, optimizer)
+            fit_res = trainer.fit(dl_train, dl_test, num_epochs, max_batches=max_batches)
+
+            return fit_res
+
+        best_results = pd.DataFrame(columns=['wstd', 'lr_vanilla', 'lr_momentum', 'lr_rmsprop', 'reg', 'accuracy'])
+
+        for wstd in [0.01, 0.05, 0.1]:
+            for reg in np.linspace(1e-5, 0.00015, 15):
+                for lr_vanilla in np.linspace(1e-5, 0.00015, 15):
+                    hp = dict(wstd=wstd, lr_vanilla=lr_vanilla, lr_momentum=None, lr_rmsprop=None, reg=reg)
+                    res = train_with_optimizer('vanilla', optimizers.VanillaSGD, hp)
+                    best_results = best_results.append(
+                        {'wstd': hp['wstd'], 'lr_vanilla': hp['lr_vanilla'], 'lr_momentum': hp['lr_momentum'],
+                         'lr_rmsprop': hp['lr_rmsprop'], 'reg': hp['reg'], 'accuracy': max(res.test_acc)},
+                        ignore_index=True)
+                    print(best_results)
+                    with open('.\search_outputs.pickle', mode='wb') as handle:
+                        pickle.dump(best_results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        print('********************************************Summary*************************************')
+        print(best_results)
+        print('****************************************************************************************')
 
 
 if __name__ == '__main__':

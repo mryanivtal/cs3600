@@ -56,8 +56,35 @@ part2_q1 = r"""
 """
 
 part2_q2 = r"""
-**Yes**
+**Yes, it is possible, since they measure different things**. <Br>
+<Br>
+Accuracy: $\dfrac{number of correct predictions}{Total number of predictions}$ <Br>
+<Br>
+Cross antropy: $\ell_{\mathrm{CE}}(\vec{y},\hat{\vec{y}}) = - {\vectr{y}} \log(\hat{\vec{y}})$ <Br>
+<Br>
+**Example for both accuracy and loss going up at the same time:** <Br>
 
+**Scenario 1:**
+
+|| Ground_truth class | P(a) | P(B) | P(C) | Cross antropy | Accuracy ||
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Sample 1 | A | 0.7 | 0.15 | 0.15| 0.357 | 1 |
+| Sample 2 | A | 0.7 | 0.15 | 0.15| 0.357 | 1 |
+| Sample 3 | A | 0.33 | 0.33 | 0.34| 1.109 | 0 |
+    
+**Loss**: 1.82
+**Accuracy**: 0.667
+
+**Scenario 2:**
+
+|| Ground_truth class | P(a) | P(B) | P(C) | Cross antropy | Accuracy ||
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Sample 1 | A | 0.5 | 0.25 | 0.25| 0.693 | 1 |
+| Sample 2 | A | 0.5 | 0.25 | 0.25| 0.693 | 1 |
+| Sample 3 | A | 0.5 | 0.25 | 0.25| 1.693 | 1 |
+    
+**Loss**: 2.07
+**Accuracy**: 1.00
 """
 # ==============
 

@@ -293,7 +293,7 @@ class MyTestCase(unittest.TestCase):
 
 
     def test_temp(self1):
-        with open('.\search_outputs_temp.pickle', mode='rb') as handle:
+        with open('.\search_outputs2.pickle', mode='rb') as handle:
             results = pickle.load(handle)
             print(results)
 

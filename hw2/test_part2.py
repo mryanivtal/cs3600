@@ -292,5 +292,10 @@ class MyTestCase(unittest.TestCase):
         print('****************************************************************************************')
 
 
+    def test_temp(self1):
+        with open('.\search_outputs_temp.pickle', mode='rb') as handle:
+            results = pickle.load(handle)
+            print(results)
+
 if __name__ == '__main__':
     unittest.main()

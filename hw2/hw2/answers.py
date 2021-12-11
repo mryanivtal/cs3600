@@ -90,30 +90,57 @@ Cross antropy: $\ell_{\mathrm{CE}}(\vec{y},\hat{\vec{y}}) = - {\vectr{y}} \log(\
 # ==============
 
 # ==============
+"""
+# ==============
+
+# ==============
 # Part 3 answers
 
 part3_q1 = r"""
-**Your answer:**
+1)
+Number of parameters for regular ResBlock: 
+Both conv_layers have 64*(64*3^2+1)=36928 so 73,856 parametrs in total.
 
+Number of parameters of bottleneck ResBlock:
+Layer1:  64 * (256 * 1^2+1)=16,448
+Layer2:  64 * (64 * 3^2+1)=36928
+Layer3:  256 * (64 * 1^2 +1) = 16640
+So in total we have 70,016 parameters 
+
+2)
+Number of floating point operations for regular ResBlock is 2*73,856
+Number of parameters of bottleneck ResBlock is 2*70,016
+
+3)
+1. Within feature maps: regular ResBlock has a higher ability to combine the input within 
+a feature map because it depends on more input features.
+
+2. Across feature maps: bottleneck ResBlock allows to reach a compact
+ representation of the feature map as it projects the input feature map into smaller channel size 
+  and then projects it back to the original. 
 """
 
 part3_q2 = r"""
-**Your answer:**
+
+1) A deeper network is expected to perform better but because of vanishing grdients probelms at some point the netwrok can't train anymore. 
+ As we can observe from the plots, the best accuracy was reached when L=4.
+
+2) For L=8 and L=16 the network failed to train. The reason for this is the vanishing gradients problem as mentioned. A possible solution is using batch normalization.
 
 """
 
 part3_q3 = r"""
-**Your answer:**
+In 1.2 we can see that all configrations suceeeded to be trained but with lower performance results rather than 1.1 .  We can see that lower K values brings better results
 
 """
 
 part3_q4 = r"""
-**Your answer:**
+In 1.3 we can see that best accuracy was reached with K2. From then the network was unable to train because of vanishing gradients problem.
 
 """
 
 part3_q5 = r"""
-**Your answer:**
+In 1.4 we can see that only L2 was able to learn.
 
 """
 

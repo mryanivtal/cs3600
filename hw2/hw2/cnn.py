@@ -8,6 +8,8 @@ POOLINGS = {"avg": nn.AvgPool2d, "max": nn.MaxPool2d}
 
 def layer_shape(x, k=1, p=0, s=1, d=1):
     return int(((x + 2*p - d*(k - 1) - 1)/s) + 1)
+def get_padding(x, k, s):
+    return int((((x - 1)*s) + k -x)/ 2)
 
 class ConvClassifier(nn.Module):
     """
@@ -207,9 +209,25 @@ class ResidualBlock(nn.Module):
         #  - Don't create layers which you don't use! This will prevent
         #    correct comparison in the test.
         # ====== YOUR CODE: ======
-
-        # ========================
-
+        layers = []
+        N = len(channels)	
+        in_channels_temp = 	in_channels	
+        for i in range(N-1):
+              layers.append(nn.Conv2d(in_channels=in_channels_temp, out_channels= channels[i], kernel_size=kernel_sizes[i], padding = get_padding(channels[i],kernel_sizes[i], 1)))
+              in_channels_temp = channels[i]
+              if dropout > 0:
+                   layers.append(nn.Dropout2d(p=dropout))
+              if batchnorm:
+                   layers.append(nn.BatchNorm2d(channels[i]))
+              layers.append(ACTIVATIONS[activation_type](**activation_params))	   
+        layers.append(nn.Conv2d(in_channels=channels[len(channels) - 2], out_channels= channels[len(channels) - 1], kernel_size=kernel_sizes[len(channels) - 1], padding =get_padding(channels[len(channels) - 1],kernel_sizes[len(channels) - 1], 1)))
+        self.main_path = nn.Sequential(*layers)
+        if in_channels != channels[len(channels) - 1]:
+            self.shortcut_path = nn.Conv2d(in_channels, channels[len(channels) - 1], kernel_size=(1, 1), stride=(1, 1), bias=False)
+        else:
+            self.shortcut_path = nn.Sequential()
+		# ========================
+       
     def forward(self, x):
         out = self.main_path(x)
         out += self.shortcut_path(x)
@@ -242,7 +260,10 @@ class ResidualBottleneckBlock(ResidualBlock):
         :param kwargs: Any additional arguments supported by ResidualBlock.
         """
         # ====== YOUR CODE: ======
-
+        inner_channels.insert(0,inner_channels[0])
+        inner_kernel_sizes.insert(0,1)
+        super().__init__(in_out_channels,inner_channels, inner_kernel_sizes, **kwargs)
+        self.main_path.add_module('projection',nn.Identity(inner_channels[len(inner_channels) -1],in_out_channels,  kernel_size=(1, 1),padding=1, bias=False))
         # ========================
 
 
@@ -283,8 +304,26 @@ class ResNetClassifier(ConvClassifier):
         #  - Use your own ResidualBlock implementation.
         # ====== YOUR CODE: ======
         # Loop over groups of P output channels and create a block from them.
+		
 
         # ========================
+        n_features = in_w		
+        # ========================
+		
+        channels = [in_channels] + self.channels
+        kernel_size = 3
+        for i in list(range(0, len(channels) - 1, self.pool_every)):
+ 
+             layers.append(ResidualBlock(channels[i], channels[i + 1:i + self.pool_every + 1],
+                                         kernel_sizes=[kernel_size] * len(channels[i + 1:i + self.pool_every + 1]),
+                                         batchnorm=self.batchnorm, dropout=self.dropout,
+                                         activation_type=self.activation_type, activation_params=self.activation_params))
+			
+             if i != list(range(0, len(channels) - 1, self.pool_every))[-1]:
+                 layers.append(POOLINGS.get(self.pooling_type)(**self.pooling_params))
+
+				
+        self.n_features = 160000
         seq = nn.Sequential(*layers)
         return seq
 

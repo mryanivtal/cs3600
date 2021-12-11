@@ -77,12 +77,30 @@ def run_experiment(
     #   for you automatically.
     fit_res = None
     # ====== YOUR CODE: ======
-    # Data - use DataLoader
-    
-    # Create model, loss and optimizer instances
+    x, y = ds_train[0]
+    size = x.shape
+    channels = [x for x in filters_per_layer for i in range(layers_per_block)]
+    model =  model_cls(size,
+                                        len(ds_train.classes),
+                                        channels=channels,
+                                        pool_every=pool_every,
+                                        hidden_dims=hidden_dims,
+                                        **kw)
+
+    loss_fn = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=reg)
+    trainer = training.TorchTrainer(model, loss_fn, optimizer, device)
+    dl_train = torch.utils.data.DataLoader(ds_train, bs_train, shuffle=False)
+    dl_test = torch.utils.data.DataLoader(ds_test, bs_test, shuffle=False)
+    fit_res = trainer.fit(dl_train=dl_train,
+                          dl_test=dl_test,
+                          num_epochs=epochs,
+                          max_batches=batches,
+                          checkpoints=checkpoints,
+                          early_stopping=early_stopping)
+
     
     # ========================
-
     save_experiment(run_name, out_dir, cfg, fit_res)
 
 

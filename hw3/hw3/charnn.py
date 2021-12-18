@@ -5,6 +5,8 @@ import torch.utils.data
 from torch import Tensor
 from typing import Iterator, cast
 import numpy as np
+from torch.autograd import Variable
+
 
 
 def char_maps(text: str):
@@ -284,6 +286,48 @@ class MultilayerGRU(nn.Module):
         #      sure to initialize them. See functions in torch.nn.init.
         # ====== YOUR CODE: ======
         
+        
+        # ----- Assign equation letters for clarity -----:   
+        # S, t - Sentance len, timestamp (In our case S=64)
+        # V - Vocabulary size (in our case V=78)
+        # L, k - Num layers, layer k 
+        # in_dim and out_dim are the embedding dimension (in our case 78)
+        # b - batch index, first dimension of the tensors
+        # Ws are not time (S, t) dependent
+
+        # r - reset gate
+        # z - update gate
+        # g - H tilde (Candidate)
+
+        self.dropout = dropout
+        
+        # create all layers except the last (decoding) partial layer
+        for layer in range(n_layers):               
+            this_layer_params = []
+            layer_in_dim = in_dim if layer==0 else h_dim
+            layer_out_dim = h_dim   # the only difference is the output layer
+
+            this_layer_params.append(nn.Linear(layer_in_dim, layer_out_dim)) # xz
+            this_layer_params.append(nn.Linear(layer_in_dim, layer_out_dim)) # xr
+            this_layer_params.append(nn.Linear(layer_in_dim, layer_out_dim)) # xg
+
+            this_layer_params.append(nn.Linear(h_dim, layer_out_dim, bias=False)) # hz
+            this_layer_params.append(nn.Linear(h_dim, layer_out_dim, bias=False)) # hr
+            this_layer_params.append(nn.Linear(h_dim, layer_out_dim, bias=False)) # hg
+
+            self.add_module(f'Layer_{layer}_xz', this_layer_params[0])
+            self.add_module(f'Layer_{layer}_xr', this_layer_params[1])
+            self.add_module(f'Layer_{layer}_xg', this_layer_params[2])
+
+            self.add_module(f'Layer_{layer}_hz', this_layer_params[3])
+            self.add_module(f'Layer_{layer}_hr', this_layer_params[4])
+            self.add_module(f'Layer_{layer}_hg', this_layer_params[5])
+
+            self.layer_params.append(this_layer_params)
+        
+        # add last decoding layer
+        self.layer_params.append(nn.Linear(h_dim, out_dim)) # hg
+        self.add_module(f'Output layer_xz', self.layer_params[-1])
         # ========================
 
     def forward(self, input: Tensor, hidden_state: Tensor = None):
@@ -321,6 +365,76 @@ class MultilayerGRU(nn.Module):
         #  Tip: You can use torch.stack() to combine multiple tensors into a
         #  single tensor in a differentiable manner.
         # ====== YOUR CODE: ======
-        
+        layer_output = []
+
+        for sequence_idx in range(seq_len):         # iterate on letter indexes in batch (1-64)
+            x = layer_input[:, sequence_idx, :]     # Take a vector of letters in the same index frrm all sequences of the same batch - dim [B, I] = [32 x 78]
+
+            for layer_idx in range(self.n_layers):  # go over layers one by one, except output layer
+                this_layer_params = self.layer_params[layer_idx] # [xz, xr, xg, hz, hr, hg]
+                h_prev_layer = layer_states[layer_idx] 
+
+                z = nn.Sigmoid()(this_layer_params[0](x) + this_layer_params[3](h_prev_layer))
+                r = nn.Sigmoid()(this_layer_params[1](x) + this_layer_params[4](h_prev_layer))
+                g = nn.Tanh()(this_layer_params[2](x) + this_layer_params[5](r * h_prev_layer))
+                h = z * h_prev_layer + (1 - z) * g          # new hidden state
+                layer_states[layer_idx] = h                 # store h new for use by next layer
+
+                # prepare for next layer
+                h_dropout = nn.Dropout(self.dropout)(h) 
+                x = h_dropout   
+
+            layer_output.append(self.layer_params[-1](h_dropout))   # construct y of this layer by decoding this layer output (h_dropout) using the output layer
+           
+        layer_output = torch.stack(layer_output, dim=1)
+        hidden_state = torch.stack(layer_states, dim=1)
         # ========================
         return layer_output, hidden_state
+
+
+
+# ============================== My code here :)
+class GRUCell(nn.Module):
+    def __init__(self, input_size, hidden_size, bias=True):
+        super(GRUCell, self).__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.bias = bias
+
+        self.x2h = nn.Linear(input_size, 3 * hidden_size, bias=bias)
+        self.h2h = nn.Linear(hidden_size, 3 * hidden_size, bias=bias)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        std = 1.0 / np.sqrt(self.hidden_size)
+        for w in self.parameters():
+            w.data.uniform_(-std, std)
+
+    def forward(self, input, hx=None):
+
+        # Inputs:
+        #       input: of shape (batch_size, input_size)
+        #       hx: of shape (batch_size, hidden_size)
+        # Output:
+        #       hy: of shape (batch_size, hidden_size)
+
+        if hx is None:
+            hx = Variable(input.new_zeros(input.size(0), self.hidden_size))
+
+        x_t = self.x2h(input)
+        h_t = self.h2h(hx)
+
+
+        x_reset, x_upd, x_new = x_t.chunk(3, 1)
+        h_reset, h_upd, h_new = h_t.chunk(3, 1)
+
+        reset_gate = torch.sigmoid(x_reset + h_reset)
+        update_gate = torch.sigmoid(x_upd + h_upd)
+        new_gate = torch.tanh(x_new + (reset_gate * h_new))
+
+        hy = update_gate * hx + (1 - update_gate) * new_gate
+
+        return hy
+
+

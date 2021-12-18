@@ -162,7 +162,8 @@ def hot_softmax(y, dim=0, temperature=1.0):
     """
     # TODO: Implement based on the above.
     # ====== YOUR CODE: ======
-    
+    y_scaled = y / temperature
+    return nn.Softmax(dim=dim)(y_scaled)
     # ========================
     return result
 
@@ -199,6 +200,27 @@ def generate_from_model(model, start_sequence, n_chars, char_maps, T):
     #  See torch.no_grad().
     # ====== YOUR CODE: ======
     
+    # calculate initial h from the input string:
+    # todo: yaniv: here!
+    embedded_samples = chars_to_onehot(start_sequence, char_to_idx)     #embed samples to onehot
+    embedded_samples = embedded_samples[None, :, :].float()
+    
+    # --- generate h for end of start_sequence.  
+    # Start with empty h, use actual samples and not rpredicted ones
+    init_predicted_samples, h = model.forward(embedded_samples, None)
+    
+    predicted_sample = init_predicted_samples[:, -1, :][:, None, :] # take only last timestep output, rearrange dimensions
+    embedded_predicted_samples=predicted_sample
+    
+    # --- start generating new samples based on prev. predictions
+    # this time use predicted samples as input for next
+    for i in range(n_chars - 1):                                     
+        predicted_sample, h = model.forward(predicted_sample, h)
+        embedded_predicted_samples = torch.cat((embedded_predicted_samples, predicted_sample), dim=1)
+    
+    embedded_predicted_samples = torch.squeeze(embedded_predicted_samples, dim=0)   # Reduce batch dimension
+    onehot_predicted_samples = hot_softmax(embedded_predicted_samples, dim=0, temperature=T)
+    out_text = onehot_to_chars(onehot_predicted_samples, idx_to_char)
     # ========================
 
     return out_text
@@ -285,20 +307,6 @@ class MultilayerGRU(nn.Module):
         #      then call self.register_parameter() on them. Also make
         #      sure to initialize them. See functions in torch.nn.init.
         # ====== YOUR CODE: ======
-        
-        
-        # ----- Assign equation letters for clarity -----:   
-        # S, t - Sentance len, timestamp (In our case S=64)
-        # V - Vocabulary size (in our case V=78)
-        # L, k - Num layers, layer k 
-        # in_dim and out_dim are the embedding dimension (in our case 78)
-        # b - batch index, first dimension of the tensors
-        # Ws are not time (S, t) dependent
-
-        # r - reset gate
-        # z - update gate
-        # g - H tilde (Candidate)
-
         self.dropout = dropout
         
         # create all layers except the last (decoding) partial layer
@@ -390,51 +398,4 @@ class MultilayerGRU(nn.Module):
         hidden_state = torch.stack(layer_states, dim=1)
         # ========================
         return layer_output, hidden_state
-
-
-
-# ============================== My code here :)
-class GRUCell(nn.Module):
-    def __init__(self, input_size, hidden_size, bias=True):
-        super(GRUCell, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.bias = bias
-
-        self.x2h = nn.Linear(input_size, 3 * hidden_size, bias=bias)
-        self.h2h = nn.Linear(hidden_size, 3 * hidden_size, bias=bias)
-
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        std = 1.0 / np.sqrt(self.hidden_size)
-        for w in self.parameters():
-            w.data.uniform_(-std, std)
-
-    def forward(self, input, hx=None):
-
-        # Inputs:
-        #       input: of shape (batch_size, input_size)
-        #       hx: of shape (batch_size, hidden_size)
-        # Output:
-        #       hy: of shape (batch_size, hidden_size)
-
-        if hx is None:
-            hx = Variable(input.new_zeros(input.size(0), self.hidden_size))
-
-        x_t = self.x2h(input)
-        h_t = self.h2h(hx)
-
-
-        x_reset, x_upd, x_new = x_t.chunk(3, 1)
-        h_reset, h_upd, h_new = h_t.chunk(3, 1)
-
-        reset_gate = torch.sigmoid(x_reset + h_reset)
-        update_gate = torch.sigmoid(x_upd + h_upd)
-        new_gate = torch.tanh(x_new + (reset_gate * h_new))
-
-        hy = update_gate * hx + (1 - update_gate) * new_gate
-
-        return hy
-
 

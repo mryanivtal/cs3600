@@ -201,7 +201,6 @@ def generate_from_model(model, start_sequence, n_chars, char_maps, T):
     # ====== YOUR CODE: ======
     
     # calculate initial h from the input string:
-    # todo: yaniv: here!
     embedded_samples = chars_to_onehot(start_sequence, char_to_idx)     #embed samples to onehot
     embedded_samples = embedded_samples[None, :, :].float()
     

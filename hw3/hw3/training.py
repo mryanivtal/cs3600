@@ -218,17 +218,23 @@ class RNNTrainer(Trainer):
     def __init__(self, model, loss_fn, optimizer, device=None):
         super().__init__(model, loss_fn, optimizer, device)
 
+        self.chached = dict()
+
     def train_epoch(self, dl_train: DataLoader, **kw):
         # TODO: Implement modifications to the base method, only if needed!
         # ====== YOUR CODE: ======
+        
         # ========================
         return super().train_epoch(dl_train, **kw)
+
 
     def test_epoch(self, dl_test: DataLoader, **kw):
         # TODO: Implement modifications to the base method, only if needed!
         # ====== YOUR CODE: ======
+        pass
         # ========================
         return super().test_epoch(dl_test, **kw)
+
 
     def train_batch(self, batch) -> BatchResult:
         x, y = batch
@@ -244,7 +250,33 @@ class RNNTrainer(Trainer):
         #  - Update params
         #  - Calculate number of correct char predictions
         # ====== YOUR CODE: ======
+        
+        #  - Forward pass
+        if 'h_prev_batch' in self.chached:
+            h = self.chached['h_prev_batch']
+        else:
+            h = None
+        
+        predicted_samples, h = self.model.forward(x, h)
+        
+        #  - Calculate total loss over sequence
+        loss = self.loss_fn(predicted_samples.squeeze(dim=0), y.squeeze())
 
+        #  - Backward pass: truncated back-propagation through time
+        # todo: I am here! Yaniv
+
+
+        #  - Update params
+        
+
+        #  - Calculate number of correct char predictions
+
+        y_pred = torch.argmax(predicted_samples.squeeze(dim=0), dim=1)
+        num_correct = (y - y_pred == 0).sum()
+
+        self.chached['h_prev_batch'] = h
+
+       
         # ========================
 
         # Note: scaling num_correct by seq_len because each sample has seq_len
@@ -264,6 +296,7 @@ class RNNTrainer(Trainer):
             #  - Loss calculation
             #  - Calculate number of correct predictions
             # ====== YOUR CODE: ======
+            pass
 
             # ========================
 

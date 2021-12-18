@@ -96,7 +96,7 @@ Cross antropy: $\ell_{\mathrm{CE}}(\vec{y},\hat{\vec{y}}) = - {\vectr{y}} \log(\
 # ==============
 # Part 3 answers
 
-part3_q1 = r"""
+part3_q1 = r""
 1)
 Number of parameters for regular ResBlock: 
 Both conv_layers have 64*(64*3^2+1)=36928 so 73,856 parametrs in total.

@@ -200,27 +200,26 @@ def generate_from_model(model, start_sequence, n_chars, char_maps, T):
     #  See torch.no_grad().
     # ====== YOUR CODE: ======
     
-    with torch.no_grad():
-        hidden_states = [None]
-        for i in range(n_chars - len(start_sequence)):
-            if i == 0:
-                onehot_tensor = chars_to_onehot(start_sequence, char_to_idx).unsqueeze(0).to(device)
-            else:
-                onehot_tensor = chars_to_onehot(str(next_char), char_to_idx).unsqueeze(0).to(device)
-            
-            y_pred, h = model.forward(onehot_tensor.to(dtype=torch.float), hidden_states[i])
-            hidden_states.append(h)
-            
-            if i == 0:
-                y_pred_scores = y_pred[0, len(start_sequence) + i - 1, :]
-            else:
-                y_pred_scores = y_pred[0, 0, :]
-            
-            # --- choose next char
-            y_pred_prob = hot_softmax(y_pred_scores, temperature=T)
-            idx = int(torch.multinomial(y_pred_prob, 1))
-            next_char = idx_to_char[idx]
-            out_text = out_text + next_char
+    # calculate initial h from the input string:
+    embedded_samples = chars_to_onehot(start_sequence, char_to_idx)     #embed samples to onehot
+    embedded_samples = embedded_samples[None, :, :].float()
+    
+    # --- generate h for end of start_sequence.  
+    # Start with empty h, use actual samples and not rpredicted ones
+    init_predicted_samples, h = model.forward(embedded_samples, None)
+    
+    predicted_sample = init_predicted_samples[:, -1, :][:, None, :] # take only last timestep output, rearrange dimensions
+    embedded_predicted_samples=predicted_sample
+    
+    # --- start generating new samples based on prev. predictions
+    # this time use predicted samples as input for next
+    for i in range(n_chars - 1):                                     
+        predicted_sample, h = model.forward(predicted_sample, h)
+        embedded_predicted_samples = torch.cat((embedded_predicted_samples, predicted_sample), dim=1)
+    
+    embedded_predicted_samples = torch.squeeze(embedded_predicted_samples, dim=0)   # Reduce batch dimension
+    onehot_predicted_samples = hot_softmax(embedded_predicted_samples, dim=0, temperature=T)
+    out_text = onehot_to_chars(onehot_predicted_samples, idx_to_char)
     # ========================
 
     return out_text

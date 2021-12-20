@@ -93,26 +93,7 @@ class Trainer(abc.ABC):
             #  - Implement early stopping. This is a very useful and
             #    simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
-            if test_loss:
-                prev = test_loss[-1]
-                
-            train_result = self.train_epoch(dl_train, verbose = verbose)
-            train_loss += [torch.mean(train_result.losses)]
-            train_acc += [train_result.accuracy]
-            test_result = self.test_epoch(dl_test, verbose = verbose)
-            test_loss += [torch.mean(test_result.losses)]
-            test_acc += [train_result.accuracy]
             
-            #early stopping
-
-            if epoch > 0 and (test_loss[-1] - prev >= -0.0001): #we consider this minor change as a non - improvment
-                epochs_without_improvement += 1
-            else:
-                epochs_without_improvement = 0
-            if early_stopping and early_stopping == epochs_without_improvement:
-                print("early stopping :(")
-                break
-            actual_num_epochs += 1
             # ========================
 
             # Save model checkpoint if requested
@@ -241,8 +222,7 @@ class RNNTrainer(Trainer):
     def train_epoch(self, dl_train: DataLoader, **kw):
         # TODO: Implement modifications to the base method, only if needed!
         # ====== YOUR CODE: ======
-        self.hidden_state = None
-
+        self.h = None
         # ========================
         return super().train_epoch(dl_train, **kw)
 
@@ -250,7 +230,7 @@ class RNNTrainer(Trainer):
     def test_epoch(self, dl_test: DataLoader, **kw):
         # TODO: Implement modifications to the base method, only if needed!
         # ====== YOUR CODE: ======
-        self.hidden_state = None
+        self.h = None
         # ========================
         return super().test_epoch(dl_test, **kw)
 
@@ -269,16 +249,33 @@ class RNNTrainer(Trainer):
         #  - Update params
         #  - Calculate number of correct char predictions
         # ====== YOUR CODE: ======
+        
+        #  - Forward pass      
+        y_pred, h = self.model.forward(x, self.h)
+        
+        #  - Calculate total loss over sequence
+        # loss = self.loss_fn(predicted_samples.squeeze(dim=0), y.squeeze())
+
         self.optimizer.zero_grad()
-        pred, hidden_state = self.model(x, self.hidden_state)
-        self.hidden_state = hidden_state.detach()
-        pred = pred.view((-1, x.shape[-1]))
-        y = y.view((-1))
-        loss = self.loss_fn(pred, y)
+
+        loss = 0
+        for i in range(seq_len):
+            loss += self.loss_fn(y_pred[:, i, :], y[:, i])
+        
+        #  - Backward pass: truncated back-propagation through time
         loss.backward()
+
+        #  - Update params
         self.optimizer.step()
-        preds = torch.argmax(pred, 1)
-        num_correct = torch.sum((y == preds))
+
+        #  - Calculate number of correct char predictions
+        y_pred = torch.argmax(y_pred, dim=-1)
+        num_correct = torch.sum(y_pred == y).float()
+        self.h = h.detach()
+
+        # y_pred = torch.argmax(predicted_samples.squeeze(dim=0), dim=1)
+        # num_correct = (y - y_pred == 0).sum()
+       
         # ========================
 
         # Note: scaling num_correct by seq_len because each sample has seq_len
@@ -298,10 +295,7 @@ class RNNTrainer(Trainer):
             #  - Loss calculation
             #  - Calculate number of correct predictions
             # ====== YOUR CODE: ======
-            output, self.hidden_state = self.model(x, self.hidden_state)
-            predictions = torch.argmax(output, dim=2)
-            num_correct = torch.eq(predictions, y).sum()
-            loss = self.loss_fn(output.transpose(1, 2), y)
+            pass
 
             # ========================
 

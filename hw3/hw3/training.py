@@ -80,7 +80,7 @@ class Trainer(abc.ABC):
                 self.model.load_state_dict(saved_state["model_state"])
 
         for epoch in range(num_epochs):
-            save_checkpoint = False
+            save_checkpoint = True
             verbose = False  # pass this to train/test_epoch.
             if epoch % print_every == 0 or epoch == num_epochs - 1:
                 verbose = True
@@ -93,26 +93,25 @@ class Trainer(abc.ABC):
             #  - Implement early stopping. This is a very useful and
             #    simple regularization technique that is highly recommended.
             # ====== YOUR CODE: ======
-            if test_loss:
-                prev = test_loss[-1]
-                
-            train_result = self.train_epoch(dl_train, verbose = verbose)
-            train_loss += [torch.mean(train_result.losses)]
-            train_acc += [train_result.accuracy]
-            test_result = self.test_epoch(dl_test, verbose = verbose)
-            test_loss += [torch.mean(test_result.losses)]
-            test_acc += [train_result.accuracy]
-            
-            #early stopping
+            train_result = self.train_epoch(dl_train, verbose=verbose, **kw)
+            train_acc.append(train_result.accuracy)
+            train_loss.append((sum(train_result.losses) / len(train_result.losses)))
 
-            if epoch > 0 and (test_loss[-1] - prev >= -0.0001): #we consider this minor change as a non - improvment
-                epochs_without_improvement += 1
-            else:
+            test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
+            test_acc.append(test_result.accuracy)
+            test_loss.append((sum(test_result.losses) / len(test_result.losses)))
+
+            # Early Stopping
+            if best_acc is None or (test_acc[-1] > best_acc):
+                best_acc = test_acc[-1]
                 epochs_without_improvement = 0
-            if early_stopping and early_stopping == epochs_without_improvement:
-                print("early stopping :(")
+            elif test_acc[-1] < best_acc:
+                epochs_without_improvement += 1
+            elif test_acc[-1] == best_acc:
+                epochs_without_improvement += 0.3
+
+            if early_stopping and epochs_without_improvement >= early_stopping:
                 break
-            actual_num_epochs += 1
             # ========================
 
             # Save model checkpoint if requested
@@ -270,15 +269,14 @@ class RNNTrainer(Trainer):
         #  - Calculate number of correct char predictions
         # ====== YOUR CODE: ======
         self.optimizer.zero_grad()
-        pred, hidden_state = self.model(x, self.hidden_state)
-        self.hidden_state = hidden_state.detach()
-        pred = pred.view((-1, x.shape[-1]))
-        y = y.view((-1))
-        loss = self.loss_fn(pred, y)
-        loss.backward()
+        output, self.hidden_state = self.model(x, self.hidden_state)
+        self.hidden_state.detach_()
+        predictions = torch.argmax(output, dim=2)
+        num_correct = torch.eq(predictions, y).sum()
+        loss = self.loss_fn(output.transpose(1, 2), y)
+
+        loss.backward(retain_graph=True)
         self.optimizer.step()
-        preds = torch.argmax(pred, 1)
-        num_correct = torch.sum((y == preds))
         # ========================
 
         # Note: scaling num_correct by seq_len because each sample has seq_len
@@ -302,7 +300,6 @@ class RNNTrainer(Trainer):
             predictions = torch.argmax(output, dim=2)
             num_correct = torch.eq(predictions, y).sum()
             loss = self.loss_fn(output.transpose(1, 2), y)
-
             # ========================
 
         return BatchResult(loss.item(), num_correct.item() / seq_len)

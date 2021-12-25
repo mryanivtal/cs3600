@@ -45,17 +45,23 @@ def part1_generation_params():
     return start_seq, temperature
 
 
+
 part1_q1 = r"""
-**Your answer:**
+
+We split the corpus into sequences instead of training on the whole text in order to avoid overfitting. If we use the whole text, during training model will learn to memorize it instead of learning to generalize.
+
+
 """
 
 part1_q2 = r"""
-**Your answer:**
+
+It is possible that the generated text shows memory longer than the sequence length because hidden state doesn't depend on sequence length.
+
 """
 
 part1_q3 = r"""
-**Your answer:**
-"""
+
+We are not shuffling the order of batches when training because we aim to pass relevant hidden state across bacthes. This way the model can learn from the order of original text.
 
 part1_q4 = r"""
 **Your answer:**

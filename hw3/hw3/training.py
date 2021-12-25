@@ -268,14 +268,19 @@ class RNNTrainer(Trainer):
         #  - Update params
         #  - Calculate number of correct char predictions
         # ====== YOUR CODE: ======
+        CLIP_GRAD = 0
+        
         self.optimizer.zero_grad()
         output, self.hidden_state = self.model(x, self.hidden_state)
         self.hidden_state.detach_()
         predictions = torch.argmax(output, dim=2)
         num_correct = torch.eq(predictions, y).sum()
         loss = self.loss_fn(output.transpose(1, 2), y)
-
         loss.backward(retain_graph=True)
+        
+        if CLIP_GRAD > 0:
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), CLIP_GRAD)
+        
         self.optimizer.step()
         # ========================
 

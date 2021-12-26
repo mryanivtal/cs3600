@@ -62,7 +62,7 @@ It is possible that the generated text shows memory longer than the sequence len
 part1_q3 = r"""
 
 We are not shuffling the order of batches when training because we aim to pass relevant hidden state across bacthes. This way the model can learn from the order of original text.
-
+"""
 part1_q4 = r"""
 
 1. We lower the temperature to increase the probability standard deviation (Get more extreme differences)

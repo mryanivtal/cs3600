@@ -23,14 +23,16 @@ class EncoderCNN(nn.Module):
         # ====== YOUR CODE: ======
         
         # each layer params: (in_channels, out_channels, kernel_size, padding, stride, bias, normalization momentum)
-        convnet_arch = [(in_channels, 64, 5, 2, 2, False, 0.9), (64, 128, 5, 2, 2, False, 0.9), (128, out_channels, 5, 2, 2, False, 0.9)]
+        convnet_arch = [(in_channels, 64, 5, 2, 2, False, 0.9), (64, 128, 5, 2, 2, False, 0.9), (128, 256, 5, 2, 2, False, 0.9), (256, out_channels, 5, 2, 2, False, 0.9)]
+        num_conv_layers = len(convnet_arch)
 
         for i, layer in enumerate(convnet_arch): 
             in_chan, out_chan, kernel_size, padding, stride, bias, momentum = layer
 
             modules.append(Conv2d(in_channels=in_chan, out_channels=out_chan, kernel_size=kernel_size, padding=padding, stride=stride, bias=bias))
-            modules.append(BatchNorm2d(num_features=out_chan, momentum=momentum))
-            modules.append(ReLU())
+            if i < num_conv_layers - 1:
+                modules.append(BatchNorm2d(num_features=out_chan, momentum=momentum))
+                modules.append(ReLU())
         # ========================
         self.cnn = nn.Sequential(*modules)
 
@@ -55,16 +57,16 @@ class DecoderCNN(nn.Module):
         # ====== YOUR CODE: ======
 
         # each layer params: (in_channels, out_channels, kernel_size, padding, stride, bias, normalization momentum)
-        convnet_arch = [(in_channels, 256, 5, 2, 2, False, 0.9), (256, 128, 5, 2, 2, False, 0.9), (128, out_channels, 5, 2, 2, False, 0.9)]
+        convnet_arch = [(in_channels, 256, 5, 2, 2, False, 0.9), (256, 128, 5, 2, 2, False, 0.9), (128, 64, 5, 2, 2, False, 0.9), (64, out_channels, 5, 2, 2, False, 0.9)]
         num_conv_layers = len(convnet_arch)
 
         for i, layer in enumerate(convnet_arch): 
             in_chan, out_chan, kernel_size, padding, stride, bias, momentum = layer
 
             modules.append(ConvTranspose2d(in_channels=in_chan, out_channels=out_chan, kernel_size=kernel_size, padding=padding, output_padding=1, stride=stride, bias=bias))
-            modules.append(BatchNorm2d(num_features=out_chan, momentum=momentum))
         
             if i < num_conv_layers - 1:
+                modules.append(BatchNorm2d(num_features=out_chan, momentum=momentum))
                 modules.append(ReLU())
             # else:
             #     modules.append(nn.Tanh())
@@ -128,7 +130,7 @@ class VAE(nn.Module):
         sigma = torch.exp(log_sigma2 * 0.5)        #todo:yaniv: should be *0.5 or ^0.5??   ^ results in NaN due to negatives
 
         # Reparametrization trick: Sample u from an isotropic gaussian and
-        sample = torch.randn(len(x), self.z_dim, device=x.device)
+        sample = torch.randn(mu.size(), device=mu.device)
         
         # use it to create z.
         z = mu + sample * sigma
@@ -162,8 +164,12 @@ class VAE(nn.Module):
             #    Instead of sampling from N(psi(z), sigma2 I), we'll just take
             #    the mean, i.e. psi(z).
             # ====== YOUR CODE: ======
-            z_samples = torch.randn(n, self.z_dim).to(device)
-            samples = self.decode(z_samples)
+            # z_samples = torch.randn((n, self.z_dim), device=device)
+            # samples = self.decode(z_samples)
+            sample = torch.randn(n, self.z_dim, device=device)
+            decoded = self.decode(sample)
+            for i in range(n):
+                samples.append(decoded[i])
             # ========================
 
         # Detach and move to CPU for display purposes

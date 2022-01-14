@@ -1,6 +1,8 @@
+from operator import mod
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn import ReLU, BatchNorm2d, Conv2d, ConvTranspose2d
 
 
 class EncoderCNN(nn.Module):
@@ -19,7 +21,16 @@ class EncoderCNN(nn.Module):
         #  use pooling or only strides, use any activation functions,
         #  use BN or Dropout, etc.
         # ====== YOUR CODE: ======
+        
+        # each layer params: (in_channels, out_channels, kernel_size, padding, stride, bias, normalization momentum)
+        convnet_arch = [(in_channels, 64, 5, 2, 2, False, 0.9), (64, 128, 5, 2, 2, False, 0.9), (128, out_channels, 5, 2, 2, False, 0.9)]
 
+        for i, layer in enumerate(convnet_arch): 
+            in_chan, out_chan, kernel_size, padding, stride, bias, momentum = layer
+
+            modules.append(Conv2d(in_channels=in_chan, out_channels=out_chan, kernel_size=kernel_size, padding=padding, stride=stride, bias=bias))
+            modules.append(BatchNorm2d(num_features=out_chan, momentum=momentum))
+            modules.append(ReLU())
         # ========================
         self.cnn = nn.Sequential(*modules)
 
@@ -43,6 +54,21 @@ class DecoderCNN(nn.Module):
         #  inputs to the Encoder were.
         # ====== YOUR CODE: ======
 
+        # each layer params: (in_channels, out_channels, kernel_size, padding, stride, bias, normalization momentum)
+        convnet_arch = [(in_channels, 256, 5, 2, 2, False, 0.9), (256, 128, 5, 2, 2, False, 0.9), (128, out_channels, 5, 2, 2, False, 0.9)]
+        num_conv_layers = len(convnet_arch)
+
+        for i, layer in enumerate(convnet_arch): 
+            in_chan, out_chan, kernel_size, padding, stride, bias, momentum = layer
+
+            modules.append(ConvTranspose2d(in_channels=in_chan, out_channels=out_chan, kernel_size=kernel_size, padding=padding, output_padding=1, stride=stride, bias=bias))
+            modules.append(BatchNorm2d(num_features=out_chan, momentum=momentum))
+        
+            if i < num_conv_layers - 1:
+                modules.append(ReLU())
+            else:
+                modules.append(nn.Tanh())
+                
         # ========================
         self.cnn = nn.Sequential(*modules)
 
@@ -127,7 +153,7 @@ class VAE(nn.Module):
             #    Instead of sampling from N(psi(z), sigma2 I), we'll just take
             #    the mean, i.e. psi(z).
             # ====== YOUR CODE: ======
-
+            pass
             # ========================
 
         # Detach and move to CPU for display purposes

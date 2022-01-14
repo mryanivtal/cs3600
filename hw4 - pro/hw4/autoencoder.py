@@ -66,8 +66,8 @@ class DecoderCNN(nn.Module):
         
             if i < num_conv_layers - 1:
                 modules.append(ReLU())
-            else:
-                modules.append(nn.Tanh())
+            # else:
+            #     modules.append(nn.Tanh())
                 
         # ========================
         self.cnn = nn.Sequential(*modules)
@@ -96,7 +96,9 @@ class VAE(nn.Module):
 
         # TODO: Add more layers as needed for encode() and decode().
         # ====== YOUR CODE: ======
-
+        self.fc_mean = nn.Linear(in_features=n_features, out_features=z_dim)
+        self.fc_logvar = nn.Linear(in_features=n_features, out_features=z_dim)
+        self.fc_decode = nn.Linear(in_features=z_dim, out_features=n_features)
         # ========================
 
     def _check_features(self, in_size):
@@ -118,12 +120,18 @@ class VAE(nn.Module):
         #  2. Apply the reparametrization trick to obtain z.
         # ====== YOUR CODE: ======
         # Extract image features
-
+        feature_vector = self.features_encoder(x).reshape((x.shape[0], -1))
+        
         # Transform into mu and log_sigma2
+        mu =  self.fc_mean(feature_vector)
+        log_sigma2 = self.fc_logvar(feature_vector)
+        sigma = torch.exp(log_sigma2 * 0.5)        #todo:yaniv: should be *0.5 or ^0.5??   ^ results in NaN due to negatives
 
         # Reparametrization trick: Sample u from an isotropic gaussian and
+        sample = torch.randn(len(x), self.z_dim, device=x.device)
+        
         # use it to create z.
-
+        z = mu + sample * sigma
         # ========================
 
         return z, mu, log_sigma2
@@ -134,7 +142,8 @@ class VAE(nn.Module):
         #  1. Convert latent z to features h with a linear layer.
         #  2. Apply features decoder.
         # ====== YOUR CODE: ======
-
+        feature_vector = self.fc_decode(z).reshape(-1, *self.features_shape)
+        x_rec = self.features_decoder(feature_vector)
         # ========================
 
         # Scale to [-1, 1] (same dynamic range as original images).
@@ -153,7 +162,8 @@ class VAE(nn.Module):
             #    Instead of sampling from N(psi(z), sigma2 I), we'll just take
             #    the mean, i.e. psi(z).
             # ====== YOUR CODE: ======
-            pass
+            z_samples = torch.randn(n, self.z_dim).to(device)
+            samples = self.decode(z_samples)
             # ========================
 
         # Detach and move to CPU for display purposes
@@ -186,7 +196,9 @@ def vae_loss(x, xr, z_mu, z_log_sigma2, x_sigma2):
     #  1. The covariance matrix of the posterior is diagonal.
     #  2. You need to average over the batch dimension.
     # ====== YOUR CODE: ======
-
+    data_loss = torch.mean((x - xr) ** 2) / x_sigma2
+    kldiv_loss = torch.sum(z_log_sigma2.exp() + z_mu ** 2 - z_log_sigma2 - 1, 1).mean()
+    loss = data_loss + kldiv_loss
     # ========================
 
     return loss, data_loss, kldiv_loss

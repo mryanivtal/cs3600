@@ -19,29 +19,40 @@ def part2_vae_hyperparams():
     )
     # TODO: Tweak the hyperparameters to generate a former president.
     # ====== YOUR CODE: ======
-
+    hypers = dict(
+        batch_size=4, 
+        h_dim=128, 
+        z_dim=256, 
+        x_sigma2=0.3, 
+        learn_rate=0.001, 
+        betas=(0.9, 0.999))
     # ========================
     return hypers
 
 
 part2_q1 = r"""
 **Your answer:**
-
+Sigma^2 controls the width of the gaussian.
+Making it larger will make the distribution wider, and the sampling gets more "freedom" to vary fro the original training data (because in avg. z will be further to Mu)
+making it smaller will make the distribution narrower, making the samples more like the train data (because in avg. z will be closer to Mu)
 """
 
 part2_q2 = r"""
 **Your answer:**
-
+Reconstruction loss - measures (MSE) how much of the data that is required to reconstruct the original sample was lost in encode-decode process
+Bigger loss here  will signify that we lost important "Essence" data on the sample.
+KL loss - estimates the distance between the posterior distribution and the approximated one, so that sampling from that distribution will generate data close the real one
 """
 
 part2_q3 = r"""
 **Your answer:**
 
-
 """
 
 part2_q4 = r"""
 **Your answer:**
+We use log for numerical stability.
+Since sigma is typically small, log expands its range for sigma in [0,1] significantly.
 
 """
 

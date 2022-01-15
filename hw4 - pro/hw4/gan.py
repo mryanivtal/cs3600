@@ -75,12 +75,43 @@ class Generator(nn.Module):
         #  You can assume a fixed image size.
         # ====== YOUR CODE: ======
         #hint (you dont have to use....)
+        
+        modules = []
+        
+        #save latent feature map size for future use
+        self.cnn_in_channels = 1024      
+        self.cnn_featurmap_size = featuremap_size
 
-        # CNN decoder network
-        from hw4.autoencoder import DecoderCNN
-        in_channels = z_dim
-        decoder_cnn = DecoderCNN(in_channels, out_channels)
-        self.generator = decoder_cnn   #maybe add some stuff later, better keep flexible
+        # First layers to convert latent vector z to cnn feature map as required
+        self.z_to_features_fc = nn.Linear(z_dim, featuremap_size*featuremap_size*self.cnn_in_channels, bias=True)
+
+        # now conv layers for image decoder
+        # each layer params: (in_channels, out_channels, kernel_size, padding, output_padding, stride, bias, normalization momentum)
+        convnet_arch = [(self.cnn_in_channels, 512, 5, 2, 1, 2, False, 0.9), (512, 256, 5, 2, 1, 2, False, 0.9), (256, 128, 5, 2, 1, 2, False, 0.9), (128, out_channels, 5, 2, 1, 2, False, 0.9)]
+        num_conv_layers = len(convnet_arch)
+
+        for i, layer in enumerate(convnet_arch): 
+            in_chan, out_chan, kernel_size, padding, output_padding, stride, bias, momentum = layer
+
+            modules.append(ConvTranspose2d(in_channels=in_chan, out_channels=out_chan, kernel_size=kernel_size, padding=padding, output_padding=output_padding, stride=stride, bias=bias))
+        
+            if i < num_conv_layers - 1:
+                modules.append(BatchNorm2d(num_features=out_chan, momentum=momentum))
+                modules.append(ReLU())
+                
+        self.cnn_decoder = nn.Sequential(*modules)   #maybe add some stuff later, better keep flexible
+
+        # #TEST DELETE YANIV
+        # z = torch.zeros([1, 128])
+        # print('original vector shape:', z.shape)
+
+        # sample = self.z_to_features_fc(z).reshape(z.shape[0], self.cnn_in_channels, self.cnn_featurmap_size, self.cnn_featurmap_size)
+
+        # print(sample.shape)
+
+        # for module in modules:
+        #     sample = module(sample)
+        #     print(sample.shape)
         # ========================
 
     def sample(self, n, with_grad=False):
@@ -111,8 +142,9 @@ class Generator(nn.Module):
         #  Don't forget to make sure the output instances have the same
         #  dynamic range as the original (real) images.
         # ====== YOUR CODE: ======
-        # features = torch.reshape(z, [1, *self.cnn_features_shape])
-        x = self.generator(z)
+        features = self.z_to_features_fc(z)
+        features = features.reshape(z.shape[0], self.cnn_in_channels, self.cnn_featurmap_size, self.cnn_featurmap_size)
+        x = self.cnn_decoder(features)
         # ========================
         return x
 
@@ -139,6 +171,16 @@ def discriminator_loss_fn(y_data, y_generated, data_label=0, label_noise=0.0):
     #  See pytorch's BCEWithLogitsLoss for a numerically stable implementation.
     # ====== YOUR CODE: ======
 
+    # Add random noise per label from [+-label_noise / 2]
+    y_data_noise = torch.rand(y_data.shape, device=y_data.device) * label_noise - label_noise / 2
+    y_generated_noise = torch.rand(y_generated.shape, device=y_data.device) * label_noise - label_noise / 2
+
+    data_labels = data_label + y_data_noise
+    generated_labels = (1-data_label)+y_generated_noise
+
+    loss_func = torch.nn.BCEWithLogitsLoss()
+    loss_data = loss_func(y_data, data_labels)
+    loss_generated = loss_func(y_generated, generated_labels)
     # ========================
     return loss_data + loss_generated
 
@@ -159,7 +201,9 @@ def generator_loss_fn(y_generated, data_label=0):
     #  Think about what you need to compare the input to, in order to
     #  formulate the loss in terms of Binary Cross Entropy.
     # ====== YOUR CODE: ======
-
+    loss_func = torch.nn.BCEWithLogitsLoss()
+    data_labels = torch.ones(y_generated.shape, device=y_generated.device) * float(data_label)
+    loss = loss_func(y_generated, data_labels)
     # ========================
     return loss
 

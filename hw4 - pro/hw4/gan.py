@@ -5,6 +5,8 @@ from torch import Tensor
 from typing import Callable
 from torch.utils.data import DataLoader
 from torch.optim.optimizer import Optimizer
+from torch.nn import ReLU, BatchNorm2d, Conv2d, ConvTranspose2d
+
 
 
 class Discriminator(nn.Module):
@@ -20,6 +22,23 @@ class Discriminator(nn.Module):
         #  You can then use either an affine layer or another conv layer to
         #  flatten the features.
         # ====== YOUR CODE: ======
+        modules = []
+        in_channels, hight, width = in_size
+        out_channels = 1024
+
+        # CNN layers of discriminator (Encoder):
+        from hw4.autoencoder import EncoderCNN
+        self.encoder_cnn = EncoderCNN(in_channels, out_channels)
+
+        # classification layer (FC):
+        # first find out and store shape of cnn output to FC layer:
+        with torch.no_grad():
+            sample = torch.zeros(1, *in_size)
+            self.cnn_features_shape = self.encoder_cnn(sample).shape
+            self.cnn_out_flattened_size = self.encoder_cnn(sample).flatten().shape[0]
+
+        # now add classification layer
+        self.classification_fc = nn.Linear(self.cnn_out_flattened_size, 1, bias=True)
         # ========================
 
     def forward(self, x):
@@ -32,7 +51,9 @@ class Discriminator(nn.Module):
         #  No need to apply sigmoid to obtain probability - we'll combine it
         #  with the loss due to improved numerical stability.
         # ====== YOUR CODE: ======
-
+        cnn_output = self.encoder_cnn(x)
+        cnn_output = cnn_output.view(x.shape[0], -1)
+        y = self.classification_fc(cnn_output)
         # ========================
         return y
 
@@ -54,8 +75,12 @@ class Generator(nn.Module):
         #  You can assume a fixed image size.
         # ====== YOUR CODE: ======
         #hint (you dont have to use....)
-        from .autoencoder import DecoderCNN
 
+        # CNN decoder network
+        from hw4.autoencoder import DecoderCNN
+        in_channels = z_dim
+        decoder_cnn = DecoderCNN(in_channels, out_channels)
+        self.generator = decoder_cnn   #maybe add some stuff later, better keep flexible
         # ========================
 
     def sample(self, n, with_grad=False):
@@ -86,7 +111,8 @@ class Generator(nn.Module):
         #  Don't forget to make sure the output instances have the same
         #  dynamic range as the original (real) images.
         # ====== YOUR CODE: ======
-
+        # features = torch.reshape(z, [1, *self.cnn_features_shape])
+        x = self.generator(z)
         # ========================
         return x
 

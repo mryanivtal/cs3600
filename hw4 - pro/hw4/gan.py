@@ -128,7 +128,12 @@ class Generator(nn.Module):
         #  Generate n latent space samples and return their reconstructions.
         #  Don't use a loop.
         # ====== YOUR CODE: ======
-
+        samples = torch.randn(n, self.z_dim, device=device)
+        if with_grad:
+            samples = self.forward(samples)
+        else:
+            with torch.no_grad():
+                samples = self.forward(samples)
         # ========================
         return samples
 
@@ -228,7 +233,15 @@ def train_batch(
     #  2. Calculate discriminator loss
     #  3. Update discriminator parameters
     # ====== YOUR CODE: ======
+    dsc_optimizer.zero_grad()
+    generated_samples = gen_model.sample(x_data.shape[0], with_grad=False)
+    generated_samples_score = dsc_model(generated_samples)
 
+    y_samples_score = dsc_model(x_data)
+    dsc_loss = dsc_loss_fn(y_samples_score, generated_samples_score)
+
+    dsc_loss.backward()
+    dsc_optimizer.step()
     # ========================
 
     # TODO: Generator update
@@ -236,7 +249,13 @@ def train_batch(
     #  2. Calculate generator loss
     #  3. Update generator parameters
     # ====== YOUR CODE: ======
+    gen_optimizer.zero_grad()
+    generated_samples = gen_model.sample(x_data.shape[0], with_grad=True)
+    generated_samples_score = dsc_model(generated_samples)
 
+    gen_loss = gen_loss_fn(generated_samples_score)
+    gen_loss.backward()
+    gen_optimizer.step()
     # ========================
 
     return dsc_loss.item(), gen_loss.item()
@@ -259,7 +278,8 @@ def save_checkpoint(gen_model, dsc_losses, gen_losses, checkpoint_file):
     #  You should decide what logic to use for deciding when to save.
     #  If you save, set saved to True.
     # ====== YOUR CODE: ======
-
+    torch.save(gen_model, checkpoint_file)
+    saved=True
     # ========================
 
     return saved

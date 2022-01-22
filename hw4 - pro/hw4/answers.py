@@ -132,7 +132,7 @@ If the discriminator is far from 50%, or gets stuck in 1/0, this means the equil
 
 part3_q3 = r"""
 **Your answer:**
-Our VAE samples are much nicer and less blurry, probably because of two reasons:
+Our VAE samples are more blurry and have less distinguishable details, while the GAN ones are more "Pixelated" and also more detailed.  This is probably because of two reasons:
 1. The GAN is harder to calibrate and does not perform amazingly well in our case
 2. Generally, in GAN the generator never "sees" the real samples, but creates them based on kind of a "hot/Cold" game with the discriminator.
    It doesnt have a reconstructin loss etc. so it "makes up" data based on True / False inputs only.   This creates photos that are not strictly like the originals.
